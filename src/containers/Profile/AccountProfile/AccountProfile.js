@@ -24,6 +24,7 @@ class AccountProfile extends Component {
 			firstname: '',
 			lastname: '',
 			photo: '',
+			loading: false,
 		};
 	}
 
@@ -35,8 +36,28 @@ class AccountProfile extends Component {
 		this.setState({firstname, lastname, photo});
 	}
 
-    handleUpdateProfile() {
+	/**
+	 * Submit request to update the database entry of the agent
+	 * @return {Void} 
+	 */
+    handleUpdateProfile(e) {
+    	e.preventDefault();
+    	this.setState({loading :true});
 
+    	const {id} = this.props.user;
+    	const {firstname, lastname} = this.state;
+    	const Agents = database.collection('Agents');
+
+    	Agents.doc(id).set({firstname, lastname}, {merge: true})
+    	.then(() => {
+    		this.setState({loading: false});
+    		this.props.onUpdate({firstname, lastname});
+    		alert('Your Agent profile was successfully updated!');
+    	})
+    	.catch(err => {
+    		this.setState({loading: false});
+    		console.warn(err);
+    	});
     }
 
 	/**
@@ -101,6 +122,7 @@ class AccountProfile extends Component {
 
 AccountProfile.propTypes = {
 	user: PropTypes.object.isRequired,
+	onUpdate: PropTypes.func.isRequired,
 };
 
 export default AccountProfile;
