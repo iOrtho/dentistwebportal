@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { Layout } from 'antd';
 import { connect } from 'react-redux';
+import UserAction from 'store/actions/user';
 import AccountProfile from 'containers/Profile/AccountProfile';
 
 const officeId = 'HfOnKBLWjp3lwT8K6aGe';
@@ -28,7 +29,7 @@ class Profile extends Component {
 	 * @return {ReactElement} 
 	 */
 	render() {
-		const {history, user} = this.props;
+		const {user, setUserModel} = this.props;
 
 		const style = { 
 			display: 'flex',
@@ -38,13 +39,13 @@ class Profile extends Component {
 
 		return (
 			<Layout.Content style={style}>
-				<AccountProfile user={user} />
+				<AccountProfile user={user} onUpdate={setUserModel} />
   			</Layout.Content>
 		);
 	}
 }
 
-export default connect(mapStateToProps)(Profile);
+export default connect(mapStateToProps, mapDispatchToProps)(Profile);
 
 /**
  * Map the store's state to the component's props
@@ -54,5 +55,17 @@ export default connect(mapStateToProps)(Profile);
 function mapStateToProps({user}) {
 	return {
 		user,
+	};
+}
+
+
+/**
+ * Map the actions and dispatch of the store to the component's props
+ * @param  {Function} dispatch The store's action dispatcher
+ * @return {Object}          
+ */
+function mapDispatchToProps(dispatch) {
+	return {
+		setUserModel: (data) => dispatch(UserAction.setUserModel(data)),
 	};
 }
