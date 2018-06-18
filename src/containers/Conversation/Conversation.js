@@ -2,8 +2,10 @@ import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { Layout, Button, Input, Icon, Form } from 'antd';
+import moment from 'moment';
 import { database } from 'config/firebase';
 import Message from 'components/Message';
+import ChatDayLimit from 'components/ChatDayLimit';
 import Loading from 'components/LoadingSpinner';
 
 class Conversation extends Component {
@@ -168,15 +170,23 @@ class Conversation extends Component {
 			return <p>No messages were found between {user.Office.name} and this customer.</p>;
 		}
 
-		return chat.map(({id, body, Author, created_at, seen_at}) => {
-			return (<Message 
-						key={id}
+		return chat.map(({id, body, Author, created_at, seen_at}, i) => {
+			const isDifferentDay = i == 0
+								? true
+								: moment(created_at.toDate()).isAfter(chat[i-1].created_at.toDate(), 'day');
+
+			return (
+				<div key={id}>
+					{isDifferentDay && <ChatDayLimit date={created_at.toDate()} />}
+					<Message 
 						body={body}
 						author={Author}
 						isAuthor={Author.id == user.id} 
-						sentAt={new Date(created_at.seconds)}
-						seenAt={seen_at ? new Date(seen_at.seconds) : null}
-					/>);
+						sentAt={created_at.toDate()}
+						seenAt={seen_at ? seen_at.toDate() : null}
+					/>
+				</div>
+			);
 		});
 	}
 
