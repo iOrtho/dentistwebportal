@@ -15,6 +15,7 @@ const Navbar = ({navigate,current, style: customStyle}) => {
 		    >
 		        <Menu.Item key="/home" onClick={() => navigate('/home')}>Home</Menu.Item>
 		        <Menu.Item key="/profile" onClick={() => navigate('/profile')}>My Profile</Menu.Item>
+		        <Menu.Item key="/office-details" onClick={() => navigate('/office-details')}>Office Details</Menu.Item>
 		    </Menu>
 		</Layout.Header>
 	);

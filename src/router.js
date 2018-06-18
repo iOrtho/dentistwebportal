@@ -34,6 +34,11 @@ const LoadableProfile = Loadable({
 	loading,
 });
 
+const LoadableOfficeSettings = Loadable({
+	loader: () => import('./pages/OfficeSettings/index'),
+	loading,
+});
+
 const PrivateRoute = ({render: Component, ...others}) => {
 	const redirect = (props) => {
 		return store.getState().user.id 
@@ -60,6 +65,7 @@ const router = () => {
 				<Route path="/signup" component={LoadableSignUp} />
 				<PrivateRoute path="/home" render={(props) => renderDashboardPage(LoadableHome, props)} />
 				<PrivateRoute path="/profile" render={(props) => renderDashboardPage(LoadableProfile, props)} />
+				<PrivateRoute path="/office-details" render={(props) => renderDashboardPage(LoadableOfficeSettings, props)} />
 			</App>
 		</Router>
 	);
