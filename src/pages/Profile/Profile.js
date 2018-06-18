@@ -3,6 +3,7 @@ import { Layout } from 'antd';
 import { connect } from 'react-redux';
 import UserAction from 'store/actions/user';
 import AccountProfile from 'containers/Profile/AccountProfile';
+import UpdatePassword from 'containers/Profile/UpdatePassword';
 
 const officeId = 'HfOnKBLWjp3lwT8K6aGe';
 
@@ -40,6 +41,7 @@ class Profile extends Component {
 		return (
 			<Layout.Content style={style}>
 				<AccountProfile user={user} onUpdate={setUserModel} />
+				<UpdatePassword user={user} />
   			</Layout.Content>
 		);
 	}
