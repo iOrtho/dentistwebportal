@@ -46,9 +46,10 @@ class AccountProfile extends Component {
 
     	const {id} = this.props.user;
     	const {firstname, lastname} = this.state;
+    	const name = `${firstname} ${lastname}`;
     	const Agents = database.collection('Agents');
 
-    	Agents.doc(id).update({firstname, lastname}).then(() => {
+    	Agents.doc(id).update({firstname, lastname, name}).then(() => {
     		this.setState({loading: false});
     		this.props.onUpdate({firstname, lastname});
     		alert('Your Agent profile was successfully updated!');
