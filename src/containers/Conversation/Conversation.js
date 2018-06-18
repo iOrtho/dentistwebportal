@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
-import { Layout, Button, Input, Icon, Form } from 'antd';
+import { Layout, Button, Input, Icon, Form, Col } from 'antd';
 import moment from 'moment';
 import { database } from 'config/firebase';
 import Message from 'components/Message';
-import ChatDayLimit from 'components/ChatDayLimit';
+import ChatDayLimit from 'components/Chat/ChatDayLimit';
+import CustomerDetails from 'components/Chat/CustomerDetails';
 import Loading from 'components/LoadingSpinner';
 
 class Conversation extends Component {
@@ -37,10 +38,17 @@ class Conversation extends Component {
 	}
 
 	/**
-	 * Connect to the live DB to load the messages of the conversation
+	 * Connect to the live DB to load the customer info and the messages of the conversation
 	 */
 	componentDidMount() {
 		this.asyncLoadHistory();
+		const Users = database.collection('Users');
+		const {customer} = this.props;
+
+		Users.doc(customer).get().then(doc => {
+			const customer = { ...doc.data(), id: doc.id };
+			this.setState({customer});
+		});
 	}
 
 	/**
@@ -99,6 +107,8 @@ class Conversation extends Component {
 	 * @return {Void}   
 	 */
 	sendMessage(e) {
+		e.preventDefault();
+
 		const {message: body} = this.state;
 		const {user, customer: recipient} = this.props;
 		const Author = {
@@ -110,7 +120,6 @@ class Conversation extends Component {
 			Office: user.Office,
 			Role: user.Role,
 		};
-		e.preventDefault();
 
 		if(body.length < 3) return;
 		this.setState({message: ''});
@@ -125,7 +134,7 @@ class Conversation extends Component {
 			console.log('Successfully sent message!');
 		})
 		.catch((err) => {
-			console.log('Error:', err);
+			console.warn('Error:', err);
 		})
 	}
 
@@ -195,36 +204,37 @@ class Conversation extends Component {
 	 * @return {ReactElement} 
 	 */
 	render() {
-		const {message, loading} = this.state;
-
+		const {customer, message, loading} = this.state;
+		
 		return (
-			<Layout.Content style={{width: 640, padding: 24, margin: '0 auto', backgroundColor: '#fff'}}>
-                <div ref={this.messageList} style={{overflow: 'scroll' , height: '80vh'}}>	
-                {loading && <Loading isComponent={true} />}
-                    {this.renderMessages()}
-					{this.renderMessages()}
-					{this.renderMessages()}
-					{this.renderMessages()}
-					{this.renderMessages()}
-					{this.renderMessages()}
-				</div>
-				<Form layout="inline" onSubmit={this.sendMessage}>
-					<Form.Item>
-						<Input 
-							value={message}
-							placeholder="Enter the message you want to send"
-							onPressEnter={this.sendMessage}
-							onChange={({target: {value}}) => this.setState({message: value})}
-							style={{width: '400px'}}
-						/>
-					</Form.Item>
+			<Layout.Content style={{padding: 24, backgroundColor: '#fff'}}>
+				<Col md={6}>
+					{!customer.id && <Loading isComponent={true} />}
+					{customer.id && <CustomerDetails customer={customer} />}
+				</Col>
+				<Col md={12}>
+	                <div ref={this.messageList} style={{overflow: 'scroll' , height: '80vh'}}>	
+	                {loading && <Loading isComponent={true} />}
+	                    {this.renderMessages()}
+					</div>
+					<Form layout="inline" onSubmit={this.sendMessage}>
+						<Form.Item>
+							<Input 
+								value={message}
+								placeholder="Enter the message you want to send"
+								onPressEnter={this.sendMessage}
+								onChange={({target: {value}}) => this.setState({message: value})}
+								style={{width: '400px'}}
+							/>
+						</Form.Item>
 
-					<Form.Item>
-						<Button type="primary" htmlType="submit" onClick={this.sendMessage}>
-							Send Message
-						</Button>
-					</Form.Item>
-				</Form>
+						<Form.Item>
+							<Button type="primary" htmlType="submit" onClick={this.sendMessage}>
+								Send Message
+							</Button>
+						</Form.Item>
+					</Form>
+				</Col>
 			</Layout.Content>
 		);
 	}
