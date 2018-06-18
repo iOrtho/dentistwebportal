@@ -9,6 +9,7 @@ export default class Errors {
 			'required': 'The {{ field }} is required.',
 			'email': 'The {{ field }} is not a valid email address.',
 			'min': 'The {{ field }} must be at least {{ argument.0 }} characters.',
+			'confirmed': 'The {{ field }} and its repeated value must be equal. ',
 		};
 	}
 
@@ -30,7 +31,7 @@ export default class Errors {
 		return this.errors[name];
 	}
 
-	async verify(data) {
+	verify(data) {
 		return new Promise((resolve, reject) => {
 			validate(data, this.rules, this.messages).then(resolve)
 			.catch(errors => {
