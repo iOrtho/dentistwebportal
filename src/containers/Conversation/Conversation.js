@@ -109,7 +109,7 @@ class Conversation extends Component {
 	sendMessage(e) {
 		e.preventDefault();
 
-		const {message: body} = this.state;
+		const {message} = this.state;
 		const {user, customer: recipient} = this.props;
 		const Author = {
 			id: user.id,
@@ -120,8 +120,12 @@ class Conversation extends Component {
 			Office: user.Office,
 			Role: user.Role,
 		};
+		const body = {
+			type: 'text',
+			content: message,
+		};
 
-		if(body.length < 3) return;
+		if(message.length < 3) return;
 		this.setState({message: ''});
 		
 		database.collection('Messages').doc().set({

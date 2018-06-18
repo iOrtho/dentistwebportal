@@ -30,7 +30,7 @@ const Message = ({body, author, isAuthor, sentAt, seenAt, style: customStyle}) =
 		<div style={containerStyle}>
 			<span>{author.name}:</span>
 			<div style={{...customStyle}}>
-				<p style={style}>{body}</p>
+				{body.type == 'text' && <p style={style}>{body.content}</p>}
 			</div>	
 			{!isAuthor && 
 				<span style={timestamp}>{moment(sentAt).format('h:mmA')}</span>}
@@ -44,7 +44,9 @@ const Message = ({body, author, isAuthor, sentAt, seenAt, style: customStyle}) =
 }
 
 Message.propTypes = {
-	body: PropTypes.string.isRequired,
+	body: PropTypes.shape({
+	  type: PropTypes.oneOf(['text', 'image', 'video']).isRequired,
+	}).isRequired,
 	author: PropTypes.shape({
 	  	name: PropTypes.string.isRequired,
 	}).isRequired,
