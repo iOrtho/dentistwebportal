@@ -10,6 +10,9 @@ export default function user(state = initialState, action) {
 		case UserAction.SET_USER_MODEL:
 			return {...state, ...action.data};
 
+		case UserAction.RESET_USER_MODEL:
+			return initialState;
+
 		case UserAction.UPDATE_OFFICE_MODEL:
 			return {
 				...state,
