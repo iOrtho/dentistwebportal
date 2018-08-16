@@ -36,6 +36,7 @@ class SignUp extends Component {
 	getInitialState() {
 		return {
 			firstname: '',
+			middlename: '',
 			lastname: '',
 			email: '',
 			password: '',
@@ -45,14 +46,15 @@ class SignUp extends Component {
 	}
 
 	createAccount() {
-		const {firstname, lastname, email, password} = this.state;
+		const {firstname, middlename, lastname, email, password} = this.state;
 
 		firebase.auth().createUserWithEmailAndPassword(email, password).then(({user}) => {
 			const data = {
 				email,
 				firstname,
+				middlename,
 				lastname,
-				name: `${firstname} ${lastname}`,
+				name: `${firstname} ${middlename ? middlename+' ' : '' }${lastname}`,
 				photo: '',
 				Office: {
 					id: officeId,
@@ -127,7 +129,7 @@ class SignUp extends Component {
 	 * @return {ReactElement} 
 	 */
 	render() {
-		const {firstname, lastname, email, password, loading, errors} = this.state;
+		const {firstname, middlename, lastname, email, password, loading, errors} = this.state;
 
 		return (
 			<Col md={12} offset={6} style={{backgroundColor: '#fff', padding: '1em 5em'}}>
@@ -161,6 +163,19 @@ class SignUp extends Component {
 							placeholder="Enter your first name."
 							maxLength={25}
 							required 
+						/>
+					</Form.Item>
+					<Form.Item
+						label="Middle name"
+					    validateStatus={errors.middlename ? 'error' : ''}
+					    help={errors.middlename}
+					>
+						<Input 
+							name="middlename"
+							value={middlename}
+							onChange={this.onInputChange}
+							placeholder="Or just the initial if you prefer"
+							maxLength={25}
 						/>
 					</Form.Item>
 					<Form.Item
