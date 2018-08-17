@@ -1,10 +1,9 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Redirect } from 'react-router-dom';
 import Loadable from 'react-loadable';
 import LoadingSpinner from './components/LoadingSpinner';
 import Wrapper from 'containers/DashboardWrapper';
 import App from 'containers/App';
-import Navbar from 'components/Navbar';
 import store from 'store/store';
 
 const loading = () => <LoadingSpinner />;
@@ -16,11 +15,6 @@ const LoadableLogin = Loadable({
 
 const LoadableSignUp = Loadable({
 	loader: () => import('./pages/Auth/SignUp/index'),
-	loading,
-});
-
-const LoadableChat = Loadable({
-	loader: () => import('./pages/Chat2/index'),
 	loading,
 });
 
