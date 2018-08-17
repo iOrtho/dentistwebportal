@@ -14,6 +14,9 @@ export default function office(state = initialState, action) {
 				...action.data,
 			};
 
+		case OfficeAction.RESET_OFFICE_MODEL:
+			return initialState;
+
 		default:
 			return state;
 	}
