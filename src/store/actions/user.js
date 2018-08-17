@@ -18,7 +18,6 @@ export default class User {
 
 	/**
 	 * Return the action to reset the user model on logout
-	 * @param {Object} data The user model
 	 * @return {Object} 
 	 */
 	static resetUserModel() {
