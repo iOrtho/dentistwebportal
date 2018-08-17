@@ -1,13 +1,10 @@
 import React, { Component } from 'react';
-import { Layout, Icon, Row, Col, Button, Form, Input } from 'antd';
+import { Row, Col, Button, Form, Input } from 'antd';
 import firebase, { database } from 'config/firebase';
 import UserAction from 'store/actions/user';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import ErrorsLib from 'lib/Errors';
-
-const companyId = 'ow71aFnAQgLAbQuF9KIQ';
-const officeId = 'HfOnKBLWjp3lwT8K6aGe';
 
 const Errors = new ErrorsLib({
 	email: 'required',
@@ -47,6 +44,7 @@ class SignUp extends Component {
 
 	createAccount() {
 		const {firstname, middlename, lastname, email, password} = this.state;
+		const {id} = this.props.office;
 
 		firebase.auth().createUserWithEmailAndPassword(email, password).then(({user}) => {
 			const data = {
@@ -57,7 +55,7 @@ class SignUp extends Component {
 				name: `${firstname} ${middlename ? middlename+' ' : '' }${lastname}`,
 				photo: '',
 				Office: {
-					id: officeId,
+					id,
 					name: 'Victron Ortho',
 				},
 				auth_id: user.uid,
@@ -219,7 +217,18 @@ class SignUp extends Component {
 	}
 }
 
-export default connect(null, mapDispatchToProps)(SignUp);
+export default connect(mapStateToProps, mapDispatchToProps)(SignUp);
+
+/**
+ * Map the store's state to the component's props
+ * @param  {Object} state.office The office's model 
+ * @return {Object}       
+ */
+function mapStateToProps({office}) {
+	return {
+		office,
+	};
+}
 
 /**
  * Map the actions and dispatch of the store to the component's props

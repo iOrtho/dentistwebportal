@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
-import { Layout, Button, Input, Icon, Form, Col } from 'antd';
+import { Layout, Button, Input, Form, Col } from 'antd';
 import moment from 'moment';
 import { database } from 'config/firebase';
 import Message from 'components/Message';
