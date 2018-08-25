@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Layout, Button, Input, Col, Form } from 'antd';
-import firebase, { auth } from 'config/firebase';
+import { connect } from 'react-redux';
+import { Layout, Button, Input, Icon, Col, Form } from 'antd';
+import firebase, { auth, database } from 'config/firebase';
+import UserAction from 'store/actions/user';
 import Loading from 'components/LoadingSpinner';
 
 class UpdatePassword extends Component {
@@ -37,7 +39,7 @@ class UpdatePassword extends Component {
     	e.preventDefault();
     	this.setState({loading: true});
 		
-		const {email} = this.props.user;
+		const {id, email} = this.props.user;
     	const {password, new_password} = this.state;
     	const cred = firebase.auth.EmailAuthProvider.credential(email, password);
     	
@@ -76,7 +78,7 @@ class UpdatePassword extends Component {
 	 * @return {ReactElement} 
 	 */
 	render() {
-		const {password, new_password, loading, errors} = this.state;
+		const {password, new_password, new_password_confirmation, loading, errors} = this.state;
 
 		const style = {
 			width: 640,

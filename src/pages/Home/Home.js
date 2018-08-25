@@ -1,10 +1,12 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { Layout, Breadcrumb } from 'antd';
+import { Layout, Breadcrumb, Menu, Icon } from 'antd';
 import SideMenu from 'components/SideMenu';
 import { database } from 'config/firebase';
 import DashboardStats from 'components/DashboardStats';
 import Conversation from 'containers/Conversation';
+
+const officeId = 'HfOnKBLWjp3lwT8K6aGe';
 
 class Home extends Component {
 
@@ -35,7 +37,7 @@ class Home extends Component {
 	 * Connect to the live message data to get a list of conversations 
 	 */
 	componentDidMount() {
-		//this.loadListOfConversations();
+		this.loadListOfConversations();
 	}
 
 	/**
@@ -43,10 +45,8 @@ class Home extends Component {
 	 * @return {Void} 
 	 */
 	loadListOfConversations() {
-		const {office} = this.props;
-
 		this.setState({loading: true});
-		database.collection('Messages').where('recipient','==', office.id)
+		database.collection('Messages').where('recipient','==', officeId)
 		.onSnapshot(snapshot => {
 			const conversations = { ...this.state.conversations};
 			snapshot.docChanges().forEach(change => {
@@ -77,8 +77,8 @@ class Home extends Component {
 	 * @return {ReactElement} 
 	 */
 	render() {
-		const {conversations, currentView, customerId} = this.state;
-		const {user} = this.props;
+		const {conversations, loading, currentView, customerId} = this.state;
+		const {user, history} = this.props;
 
 		return (
 			<Layout>
@@ -111,12 +111,10 @@ export default connect(mapStateToProps)(Home);
 /**
  * Map the store's state to the component's props
  * @param  {Object} state.user The user's Agent model 
- * @param  {Object} state.office The office's model 
  * @return {Object}       
  */
-function mapStateToProps({user, office}) {
+function mapStateToProps({user}) {
 	return {
 		user,
-		office,
 	};
 }

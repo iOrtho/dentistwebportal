@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import UserAction from 'store/actions/user';
-import { Button, Form, Input, Col, Icon } from 'antd';
+import { Button, Form, Layout, Input, Col, Icon } from 'antd';
 import firebase, { database } from 'config/firebase';
 import ErrorsLib from 'lib/Errors';
 
@@ -89,6 +89,7 @@ class Login extends Component {
 	 */
 	render() {
 		const {isSubmitting, email, password, errors} = this.state;
+		const {history} = this.props;
 
 		return (
 			<div style={{textAlign: 'center'}}>

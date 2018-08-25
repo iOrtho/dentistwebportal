@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Layout, Button, Input, Col, Form } from 'antd';
+import { Layout, Button, Input, Icon, Col, Form } from 'antd';
 import { database } from 'config/firebase';
+import Loading from 'components/LoadingSpinner';
 
 class AccountProfile extends Component {
 
