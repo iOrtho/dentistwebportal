@@ -1,7 +1,7 @@
 import OfficeAction from '../actions/office';
 
 const initialState = {
-	id: 'HfOnKBLWjp3lwT8K6aGe',
+	id: null,
 	ready: false,
 };
 
