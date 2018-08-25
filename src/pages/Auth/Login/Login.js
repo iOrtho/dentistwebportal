@@ -6,6 +6,7 @@ import { Button, Form, Layout, Input, Col, Icon } from 'antd';
 import firebase, { database } from 'config/firebase';
 import ErrorsLib from 'lib/Errors';
 
+const companyId = 'ow71aFnAQgLAbQuF9KIQ';
 const Errors = new ErrorsLib({
 	email: 'required',
 	password: 'required',
@@ -36,11 +37,6 @@ class Login extends Component {
 		};
 	}
 
-	/**
-	 * Authenticate the user and load the user data
-	 * @param  {SubmitEvent} e event
-	 * @return {Void}   
-	 */
 	onSignIn(e) {
 		const Agents = database.collection('Agents');
 		const {email, password} = this.state;
