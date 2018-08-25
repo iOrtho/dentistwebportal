@@ -19,11 +19,6 @@ const ChatDayLimit = ({date, style: customStyle}) => {
 
 ChatDayLimit.propTypes = {
 	date: PropTypes.object.isRequired,
-	style: PropTypes.object,
-};
-
-ChatDayLimit.defaultProps = {
-	style: {}
 };
 
 export default ChatDayLimit;
