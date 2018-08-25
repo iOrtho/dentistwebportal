@@ -3,6 +3,8 @@ import { Layout, Form, Input, Col, Button } from 'antd';
 import { connect } from 'react-redux';
 import { database } from 'config/firebase';
 import UserAction from 'store/actions/user';
+import DoctorForm from 'containers/Settings/DoctorSettingsForm';
+import OfficeForm from 'containers/Settings/OfficeSettingsForm';
 
 const officeId = 'HfOnKBLWjp3lwT8K6aGe';
 
@@ -13,9 +15,6 @@ class Profile extends Component {
 		super(props);
 
 		this.state = this.getInitialState();
-
-		this.fetchRelatedDataIds = this.fetchRelatedDataIds.bind(this);
-		this.handleUpdateOffice = this.handleUpdateOffice.bind(this);
 	}
 
 	/**
@@ -24,105 +23,7 @@ class Profile extends Component {
 	 */
 	getInitialState() {
 		return {
-			name: '',
-			address: [],
-			loading: false,
-			errors: {},
 		};
-	}
-
-	/**
-	 * Load the office's information from the database
-	 */
-	componentDidMount() {
-		const Offices = database.collection('Offices');
-
-		Offices.doc(officeId).onSnapshot(doc => {
-			const data = { ...doc.data() };
-			this.setState({name: data.name});
-		});
-	}
-
-	/**
-	 * Get the IDs of all the documents that will need updating
-	 * @param  {Function} cb The callback function
-	 * @return {Void}      
-	 */
-	fetchRelatedDataIds(cb) {
-		const Agents = database.collection('Agents');
-		const Messages = database.collection('Messages');
-		const agentsId = [];
-		const msgsId = [];
-
-		Promise.all([
-			Agents.where('Office.id','==', officeId).get(),
-			Messages.where('Author.Office.id','==', officeId).get(),
-		]).then(data => {
-			const agents = data[0];
-			const msgs = data[1];
-
-			agents.docChanges().forEach(changes => {
-				if(!agentsId.includes(changes.doc.id)) {
-					agentsId.push(changes.doc.id);
-				}
-			});
-
-			msgs.docChanges().forEach(changes => {
-				if(!msgsId.includes(changes.doc.id)) {
-					msgsId.push(changes.doc.id);
-				}
-			});
-
-			cb(null, {agents: agentsId, messages: msgsId});
-		}).catch(err => {
-			console.warn(err);
-			cb(err);
-		});
-	}
-
-	/**
-	 * Update the relevant database entries
-	 * @param  {Event} e Submit event
-	 * @return {Void}   
-	 */
-	handleUpdateOffice(e) {
-		e.preventDefault();
-
-		const Offices = database.collection('Offices');
-		const Agents = database.collection('Agents');
-		const Messages = database.collection('Messages');
-		const {Office: OfficeData} = this.props.user;
-
-		this.setState({loading: true});
-		this.fetchRelatedDataIds((err, {agents, messages}) => {
-			if(err) {
-				this.setState({loading: false});
-				return;
-			}
-
-			const batch = database.batch();
-			const {name} = this.state;
-			const officeUpdate = { 
-				name,
-				updated_at: new Date(),
-			};
-			const agentUpdate = {
-				'Office.name': name,
-			};
-			const msgUpdate = {
-				'Author.Office.name': name,
-			};
-
-			batch.update(Offices.doc(officeId), officeUpdate);
-			agents.forEach(id => batch.update(Agents.doc(id), agentUpdate));
-			messages.forEach(id => batch.update(Messages.doc(id), msgUpdate));
-
-			batch.commit().then(() => {
-				this.props.updateOfficeModel(officeUpdate);
-				this.setState({loading: false});
-				alert('Your office was successfully updated!');
-			});
-		});
 	}
 
 	/**
@@ -130,7 +31,7 @@ class Profile extends Component {
 	 * @return {ReactElement} 
 	 */
 	render() {
-		const {name, loading, errors} = this.state;
+		const {office} = this.props;
 		const wrapper = { 
 			display: 'flex',
 			flexDirection: 'column',
@@ -147,36 +48,8 @@ class Profile extends Component {
 			<Layout.Content style={wrapper}>
 				<Layout.Content style={content}>
 					<p>This what your app is all about, keep this information updated.</p>
-					
-					<Col sm={10}>
-						<Form onSubmit={this.handleUpdateOffice}>
-							<Form.Item label="Office ID">
-								<Input value={officeId} disabled />
-							</Form.Item>
-
-							<Form.Item label="Office name">
-								<Input 
-									value={name}
-									placeholder="Enter your office's name."
-									onChange={({target: {value}}) => this.setState({name: value})}
-									maxLength={40}
-									required
-								/>
-							</Form.Item>
-
-							<Form.Item>
-								<Button
-									type="primary"
-									htmlType="submit" 
-									size="large"
-									loading={loading}
-									style={{width: '100%'}}
-								>
-									Save the changes
-								</Button>
-							</Form.Item>
-						</Form>
-					</Col>
+					<OfficeForm office={office} updateOfficeModel={this.props.updateOfficeModel} />
+					<DoctorForm doctor={office.doctors[0]} officeId={office.id} offset={2} />
 				</Layout.Content>
   			</Layout.Content>
 		);
@@ -187,12 +60,12 @@ export default connect(mapStateToProps, mapDispatchToProps)(Profile);
 
 /**
  * Map the store's state to the component's props
- * @param  {Object} state.user The user's Agent model 
+ * @param  {Object} state.office The office's model 
  * @return {Object}       
  */
-function mapStateToProps({user}) {
+function mapStateToProps({office}) {
 	return {
-		user,
+		office,
 	};
 }
 
