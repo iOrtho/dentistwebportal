@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Layout, Form, Input, Col, Button } from 'antd';
+import { Layout, Form, Input, Col, Row, Button } from 'antd';
 import { connect } from 'react-redux';
 import { database } from 'config/firebase';
 import UserAction from 'store/actions/user';
@@ -38,7 +38,6 @@ class Profile extends Component {
 			alignItems: 'center',
 		};
 		const content = {
-			width: 800,
 			margin: '24px auto',
 			padding: 24,
 			backgroundColor: '#fff',
@@ -46,11 +45,20 @@ class Profile extends Component {
 
 		return (
 			<Layout.Content style={wrapper}>
-				<Layout.Content style={content}>
-					<p>This what your app is all about, keep this information updated.</p>
-					<OfficeForm office={office} updateOfficeModel={this.props.updateOfficeModel} />
-					<DoctorForm doctor={office.doctors[0]} officeId={office.id} offset={2} />
-				</Layout.Content>
+				<Col span={16}>
+					<Layout.Content style={content}>
+						<p>This what your app is all about, keep this information updated.</p>
+						<Row>
+							<OfficeForm office={office} updateOfficeModel={this.props.updateOfficeModel} />
+						</Row>
+					</Layout.Content>
+					<Layout.Content style={{...content, marginTop:  '1em'}}>
+						<p>This what your app is all about, keep this information updated.</p>
+						<Row>
+							<DoctorForm doctor={office.doctors[0]} officeId={office.id} offset={2} />
+						</Row>
+					</Layout.Content>
+				</Col>
   			</Layout.Content>
 		);
 	}
