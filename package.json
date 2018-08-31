@@ -10,6 +10,7 @@
     "moment": "^2.22.2",
     "prop-types": "^15.6.1",
     "react": "^16.4.0",
+    "react-avatar-image-cropper": "^1.1.7",
     "react-dom": "^16.4.0",
     "react-loadable": "^5.4.0",
     "react-redux": "^5.0.7",
