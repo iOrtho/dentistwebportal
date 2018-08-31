@@ -49,15 +49,21 @@ class Home extends Component {
 		database.collection('Messages').where('recipient','==', officeId)
 		.onSnapshot(snapshot => {
 			const conversations = { ...this.state.conversations};
+			const counts = {};
 			snapshot.docChanges().forEach(change => {
-				const data = change.doc.data();
-				
-				if(change.type == 'added' 
-					&& !conversations[data.Author.id]
-					&& !data.Author.company) {
-					conversations[data.Author.id] = data.Author;
+				const {Author, read_at} = { ... change.doc.data() };
+
+				// count the # of unread msgs
+				if(!read_at) {
+					counts[Author.id] ? counts[Author.id]++ : counts[Author.id] = 1;
+				}
+
+				if(change.type == 'added' && !conversations[Author.id] && !Author.Office) {
+					conversations[Author.id] = Author;
 				}				
 			});
+
+			Object.keys(counts).forEach(customerId => conversations[customerId].unread = counts[customerId]);
 
 			this.setState({conversations, loading: false});
 		});

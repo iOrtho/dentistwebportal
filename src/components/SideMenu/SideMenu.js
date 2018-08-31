@@ -23,10 +23,9 @@ const SideMenu = ({conversations, onOpenConvo, onOpenHome, style: customStyle}) 
 									const convo = conversations[id];
 
 									return (
-										<Menu.Item 
-											key={id}
-											onClick={() => onOpenConvo(id)}
-											>{convo.name}</Menu.Item>
+										<Menu.Item key={id} onClick={() => onOpenConvo(id)}>
+											{convo.name} {convo.unread ? `(${convo.unread})` : ''}
+										</Menu.Item>
 									);
 								})}
       						</Menu.SubMenu>
