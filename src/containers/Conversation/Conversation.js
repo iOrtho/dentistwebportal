@@ -56,16 +56,18 @@ class Conversation extends Component {
 	 * @return {Void} 
 	 */
 	asyncLoadHistory() {
-		const {id} = this.props.user.Office;
+		const {customer, user: {Office}} = this.props;
 		const Messages = database.collection('Messages');
 
 		this.setState({loading: true});
 
 		// Messages that are sent
-		Messages.where('Author.Office.id','==', id).onSnapshot(this.handleNewMsgSnapshot);
+		Messages.where('Author.Office.id','==', Office.id).where('recipient', '==', customer)
+		.onSnapshot(this.handleNewMsgSnapshot);
 
 		// Messages that are received
-		Messages.where('recipient','==', id).onSnapshot(this.handleNewMsgSnapshot);
+		Messages.where('Author.id', '==', customer).where('recipient','==', Office.id)
+		.onSnapshot(this.handleNewMsgSnapshot);
 	}
 
 	/**
@@ -111,6 +113,7 @@ class Conversation extends Component {
 
 		const {message} = this.state;
 		const {user, customer: recipient} = this.props;
+		const Messages = database.collection('Messages');
 		const Author = {
 			id: user.id,
 			firstname: user.firstname,
@@ -128,18 +131,13 @@ class Conversation extends Component {
 		if(message.length < 3) return;
 		this.setState({message: ''});
 		
-		database.collection('Messages').doc().set({
-			body,
-			recipient,
-			Author,
-			created_at: new Date(),
-		})
+		Messages.doc().set({ body, recipient, Author, created_at: new Date() })
 		.then(() => {
 			console.log('Successfully sent message!');
 		})
 		.catch((err) => {
-			console.warn('Error:', err);
-		})
+			console.error('Error:', err);
+		});
 	}
 
 	/**
