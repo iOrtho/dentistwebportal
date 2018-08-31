@@ -19,11 +19,6 @@ const LoadableSignUp = Loadable({
 	loading,
 });
 
-const LoadableChat = Loadable({
-	loader: () => import('./pages/Chat2/index'),
-	loading,
-});
-
 const LoadableHome = Loadable({
 	loader: () => import('./pages/Home/index'),
 	loading,
