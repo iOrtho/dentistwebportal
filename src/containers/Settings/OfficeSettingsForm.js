@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
-import { Layout, Form, Input, Col, Button } from 'antd';
-import { database } from 'config/firebase';
+import { Layout, Form, Input, Col, Row, Button } from 'antd';
+import { database, storage } from 'config/firebase';
 import UserAction from 'store/actions/user';
+import ImageCropper from 'react-avatar-image-cropper';
 import PropTypes from 'prop-types';
 
 class OfficeSettingsForm extends Component {
@@ -14,6 +15,7 @@ class OfficeSettingsForm extends Component {
 
 		this.handleUpdate = this.handleUpdate.bind(this);
 		this.fetchRelatedIds = this.fetchRelatedIds.bind(this);
+		this.handleImageUpload = this.handleImageUpload.bind(this);
 	}
 
 	/**
@@ -24,6 +26,7 @@ class OfficeSettingsForm extends Component {
 		return {
 			name: '',
 			description: '',
+			photo: '',
 			locations: [],
 			loading: false,
 			errors: {},
@@ -34,8 +37,8 @@ class OfficeSettingsForm extends Component {
 	 * Load the office's information into the form
 	 */
 	componentDidMount() {
-		const {name, description, locations} = this.props.office;
-		this.setState({name, description, locations});
+		const {name, description, locations, pictures} = this.props.office;
+		this.setState({name, description, locations, photo: pictures[0]});
 	}
 
 	/**
@@ -124,30 +127,70 @@ class OfficeSettingsForm extends Component {
 	}
 
 	/**
+	 * Upload the image file to the Firebase storage
+	 * @param  {Blob} file The uploaded photo
+	 * @return {VOid}      
+	 */
+	handleImageUpload(file) {
+		const {id} = this.props.office;
+		const extension = file.name.match(/\.(\w+)/)[1];
+		const ref = storage.ref().child(`images/offices/locations/${id}-${Date.now()}.${extension}`);
+		const Offices = database.collection('Offices');
+
+		ref.put(file, {contentType: file.type})
+			.then(_ => {
+				ref.getDownloadURL()
+					.then(url => {
+						Offices.doc(id).update({"pictures": [url]})
+							.then(() => this.setState({photo: url}))
+							.catch(console.error);
+					})
+					.catch(console.error);
+			})
+			.catch(console.error);
+	}
+
+	/**
 	 * Render the component's markup
 	 * @return {ReactElement} 
 	 */
 	render() {
-		const {name, description, locations, loading, errors} = this.state;
+		const {name, description, locations, photo, loading, errors} = this.state;
 		const {id} = this.props.office;
+		const divProps = { ...this.props };
+		delete divProps.office;
+		delete divProps.updateOfficeModel;
 
 		return (
-			<Col sm={10} {...this.props}>
+			<div {...divProps}>
 				<h3>Office information</h3>
 				<Form onSubmit={this.handleUpdate}>
-					<Form.Item label="Office ID">
-						<Input value={id} disabled />
-					</Form.Item>
+					<Row>
+						<Col span={12}>
+							<Form.Item label="Office ID">
+								<Input value={id} disabled />
+							</Form.Item>
 
-					<Form.Item label="Office name">
-						<Input 
-							value={name}
-							placeholder="Enter your office's name."
-							onChange={({target: {value}}) => this.setState({name: value})}
-							maxLength={40}
-							required
-						/>
-					</Form.Item>
+							<Form.Item label="Office name">
+								<Input 
+									value={name}
+									placeholder="Enter your office's name."
+									onChange={({target: {value}}) => this.setState({name: value})}
+									maxLength={40}
+									required
+								/>
+							</Form.Item>
+						</Col>
+						<Col span={12}>
+							<div style={{width: 375, height: 220, margin: '0 auto 3em auto', background: `url("${photo}")`}}>
+								<ImageCropper
+									text="Upload a photo of your practice"
+									isBack={true}
+									apply={this.handleImageUpload}
+								/>
+							</div>
+						</Col>
+					</Row>
 
 					<Form.Item label="Office description">
 						<Input.TextArea
@@ -172,7 +215,7 @@ class OfficeSettingsForm extends Component {
 						</Button>
 					</Form.Item>
 				</Form>
-			</Col>
+			</div>
 		);
 	}
 }
