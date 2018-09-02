@@ -2,12 +2,14 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 
-const Message = ({body, author, isAuthor, sentAt, seenAt, style: customStyle}) => {
+const Message = ({body, author, isAuthor, sentAt, readAt, showReadReceipt, style: customStyle}) => {
 	
 	const containerStyle = {
 		alignSelf: isAuthor ? 'flex-end' : 'flex-start',
 		textAlign: isAuthor ? 'right' : 'left',
+		float: isAuthor ? 'right' : 'left',
 		padding: '15px 0',
+		width: '80%',
 	};
 
 	const timestamp = {
@@ -16,7 +18,7 @@ const Message = ({body, author, isAuthor, sentAt, seenAt, style: customStyle}) =
 	};
 
 	const selfTimestampColor = {
-		color: seenAt ? '#0697de' : 'inherit',
+		color: showReadReceipt ? '#0697de' : 'inherit',
 	};
 
 
@@ -37,7 +39,7 @@ const Message = ({body, author, isAuthor, sentAt, seenAt, style: customStyle}) =
 			
 			{isAuthor && 
 			<span style={{...timestamp, ...selfTimestampColor}}>
-				{seenAt ? 'Seen:' : 'Sent:'} {moment(seenAt ? seenAt : sentAt).format('h:mmA')}
+				{showReadReceipt ? 'Seen' : 'Sent'} at: {moment(readAt ? readAt : sentAt).format('h:mmA')}
 			</span>}
 		</div>
 	);
@@ -52,13 +54,15 @@ Message.propTypes = {
 	}).isRequired,
 	isAuthor: PropTypes.bool.isRequired,
 	sentAt: PropTypes.object.isRequired,
-	seenAt: PropTypes.object,
+	readAt: PropTypes.object,
+	showReadReceipt: PropTypes.bool,
 	style: PropTypes.object,
 };
 
 Message.defaultProps = {
 	style: {},
-	seenAt: null,
+	readAt: null,
+	showReadReceipt: false,
 };
 
 export default Message;

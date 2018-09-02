@@ -1,8 +1,7 @@
 import React, { Component } from 'react';
 import { Layout } from 'antd';
 import Navbar from 'components/Navbar';
-import { connect } from 'react-redux';
-import { auth, database } from 'config/firebase';
+import { auth, database, messaging } from 'config/firebase';
 import UserAction from 'store/actions/user';
 import OfficeAction from 'store/actions/office';
 import store from 'store/store';
@@ -16,6 +15,11 @@ class App extends Component {
 	componentDidMount() {
 		this.loadOfficeDetails();
 		this.loadUserDetails();
+
+        // Handle notifications received
+        messaging.onMessage(payload => {
+            console.log('Notification Received', payload);
+        });
 	}
  	/**
      * Set a listener on the office model and sync it to the store

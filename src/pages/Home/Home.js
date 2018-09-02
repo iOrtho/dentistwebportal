@@ -2,11 +2,9 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { Layout, Breadcrumb, Menu, Icon } from 'antd';
 import SideMenu from 'components/SideMenu';
-import { database } from 'config/firebase';
+import { database, messaging } from 'config/firebase';
 import DashboardStats from 'components/DashboardStats';
 import Conversation from 'containers/Conversation';
-
-const officeId = 'HfOnKBLWjp3lwT8K6aGe';
 
 class Home extends Component {
 
@@ -18,6 +16,7 @@ class Home extends Component {
 
 		this.loadListOfConversations = this.loadListOfConversations.bind(this);
 		this.openConversation = this.openConversation.bind(this);
+		this.requestPermissions = this.requestPermissions.bind(this);
 	}
 
 	/**
@@ -38,6 +37,26 @@ class Home extends Component {
 	 */
 	componentDidMount() {
 		this.loadListOfConversations();
+		this.requestPermissions();
+	}
+
+	/**
+	 * Ask the user to give permissions to send notifications
+	 * @return {Void} 
+	 */
+	requestPermissions() {	
+		const Agents = database.collection('Agents');
+		const {id, notification_token} = this.props.user;
+
+		if(notification_token) return;
+
+		messaging.requestPermission()
+			.then(() => {
+				messaging.getToken().then((token) => {
+					Agents.doc(id).update({'notification_token': token, updated_at: new Date()});
+				});
+			})
+			.catch(console.error);
 	}
 
 	/**
@@ -45,19 +64,27 @@ class Home extends Component {
 	 * @return {Void} 
 	 */
 	loadListOfConversations() {
+		const {id} = this.props.user.Office;
+
 		this.setState({loading: true});
-		database.collection('Messages').where('recipient','==', officeId)
+		database.collection('Messages').where('recipient','==', id)
 		.onSnapshot(snapshot => {
 			const conversations = { ...this.state.conversations};
+			const counts = {};
 			snapshot.docChanges().forEach(change => {
-				const data = change.doc.data();
-				
-				if(change.type == 'added' 
-					&& !conversations[data.Author.id]
-					&& !data.Author.company) {
-					conversations[data.Author.id] = data.Author;
+				const {Author, read_at} = { ... change.doc.data() };
+
+				// count the # of unread msgs
+				if(!read_at) {
+					counts[Author.id] ? counts[Author.id]++ : counts[Author.id] = 1;
+				}
+
+				if(change.type == 'added' && !conversations[Author.id] && !Author.Office) {
+					conversations[Author.id] = Author;
 				}				
 			});
+
+			Object.keys(counts).forEach(customerId => conversations[customerId].unread = counts[customerId]);
 
 			this.setState({conversations, loading: false});
 		});

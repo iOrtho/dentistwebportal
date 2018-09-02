@@ -21,5 +21,6 @@ firestore.settings(settings);
 
 export const database = firestore;
 export const auth = firebase.auth();
+export const messaging = firebase.messaging();
 export const storage = firebase.storage();
 export default firebase;

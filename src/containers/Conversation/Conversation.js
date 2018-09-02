@@ -20,7 +20,9 @@ class Conversation extends Component {
 
 		this.asyncLoadHistory = this.asyncLoadHistory.bind(this);
 		this.sendMessage = this.sendMessage.bind(this);
+		this.isMessageTheLastSeen = this.isMessageTheLastSeen.bind(this);
 		this.renderMessages = this.renderMessages.bind(this);
+		this.handleMarkMessagesAsRead = this.handleMarkMessagesAsRead.bind(this);
 		this.handleNewMsgSnapshot = this.handleNewMsgSnapshot.bind(this);
 	}
 
@@ -83,16 +85,22 @@ class Conversation extends Component {
 		 		...change.doc.data(), 
 		 		id: change.doc.id,
 		 	};
-
+		 	this.mark
 			if (change.type === 'added') { 
 				this.setState((prevState) => ({
 					chat: this.sortByDate([...prevState.chat, data])
 				}));
+				setTimeout(() => this.handleMarkMessagesAsRead(), 500);
                 this.scrollToBottom();
 	        }
 
 	        if (change.type === 'modified') {
-	        	// ..
+	        	// Update the corresponding msg
+	        	const newChat = [ ...this.state.chat ];
+	        	const index = newChat.findIndex(({id}) => id == data.id);
+	        	newChat[index] = data;
+	        	this.setState({chat: newChat});
+	        	console.log(data)
 	        }
 
 	        if (change.type === 'removed') {
@@ -101,6 +109,25 @@ class Conversation extends Component {
 	    });
 
 	    this.setState({loading: false});
+	}
+
+	/**
+	 * Update the messages received to mark them as seen
+	 * @return {Void} 
+	 */
+	handleMarkMessagesAsRead() {
+		const Messages = database.collection('Messages');
+		const batch = database.batch();
+		const {chat} = this.state;
+		const {user} = this.props;
+
+		chat.forEach(({id, Author, read_at}) => {
+			if(Author.id != user.id && !read_at) { 
+				batch.update(Messages.doc(id), {read_at: new Date()});
+			}
+		});
+
+		batch.commit();
 	}
 
 	/**
@@ -169,6 +196,20 @@ class Conversation extends Component {
         ReactDOM.findDOMNode(current).scrollTop = maxScrollTop > 0 ? maxScrollTop : 0;
     }
 
+    /**
+     * Check whether a message was the last one to be seen
+     * @param  {String}  id The ID of the message
+     * @return {Boolean}    
+     */
+    isMessageTheLastSeen(id) {
+    	const {Office} = this.props.user;
+    	const messages = this.state.chat
+    						.filter(msg => msg.read_at && msg.Author.Office)
+	    					.sort((a, b) => a.read_at.toDate() > b.read_at.toDate() ? -1 : 1);
+
+    	return messages[0] && messages[0].id == id;
+    }
+
 	/**
 	 * Render the chat history
 	 * @return {ReactElement} 
@@ -181,7 +222,7 @@ class Conversation extends Component {
 			return <p>No messages were found between {user.Office.name} and this customer.</p>;
 		}
 
-		return chat.map(({id, body, Author, created_at, seen_at}, i) => {
+		return chat.map(({id, body, Author, created_at, read_at}, i) => {
 			const isDifferentDay = i == 0
 								? true
 								: moment(created_at.toDate()).isAfter(chat[i-1].created_at.toDate(), 'day');
@@ -194,7 +235,8 @@ class Conversation extends Component {
 						author={Author}
 						isAuthor={Author.id == user.id} 
 						sentAt={created_at.toDate()}
-						seenAt={seen_at ? seen_at.toDate() : null}
+						readAt={read_at ? read_at.toDate() : null}
+						showReadReceipt={this.isMessageTheLastSeen(id)}
 					/>
 				</div>
 			);
