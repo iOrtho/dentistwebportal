@@ -6,8 +6,6 @@ import UserAction from 'store/actions/user';
 import DoctorForm from 'containers/Settings/DoctorSettingsForm';
 import OfficeForm from 'containers/Settings/OfficeSettingsForm';
 
-const officeId = 'HfOnKBLWjp3lwT8K6aGe';
-
 class Profile extends Component {
 
 	/** The component's constructor */
@@ -76,7 +74,6 @@ function mapStateToProps({office}) {
 		office,
 	};
 }
-
 
 /**
  * Map the actions and dispatch of the store to the component's props
