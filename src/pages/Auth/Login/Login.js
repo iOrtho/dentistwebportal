@@ -4,12 +4,6 @@ import { Link } from 'react-router-dom';
 import UserAction from 'store/actions/user';
 import { Button, Form, Layout, Input, Col, Icon } from 'antd';
 import firebase, { database } from 'config/firebase';
-import ErrorsLib from 'lib/Errors';
-
-const Errors = new ErrorsLib({
-	email: 'required',
-	password: 'required',
-});
 
 class Login extends Component {
 
@@ -18,9 +12,7 @@ class Login extends Component {
 		super(props);
 
 		this.state = this.getInitialState();
-
-		this.onSignIn = this.onSignIn.bind(this);
-		this.onInputChange = this.onInputChange.bind(this);
+		this.handleSubmit = this.handleSubmit.bind(this);
 	}
 
 	/**
@@ -29,10 +21,9 @@ class Login extends Component {
 	 */
 	getInitialState() {
 		return {
-			isSubmitting: false,
+			loading: false,
 			email: 'st0mxhack@gmail.com',
 			password: 'secret',
-			errors: {},
 		};
 	}
 
@@ -41,46 +32,35 @@ class Login extends Component {
 	 * @param  {SubmitEvent} e event
 	 * @return {Void}   
 	 */
-	onSignIn(e) {
-		const Agents = database.collection('Agents');
-		const {email, password} = this.state;
-		this.setState({isSubmitting: true});
+	handleSubmit(e) {
 		e.preventDefault();
+		const Agents = database.collection('Agents');
 
-		Promise.all([
-			Errors.verify(this.state),
-			firebase.auth().signInWithEmailAndPassword(email, password)
-		])
-		.then(res => {
-			const {uid} = res[1].user;
+		this.props.form.validateFields((err, val) => {
+			if(!err) {
+				const {email, password} = val;
+				this.setState({loading: true});
 
-			Agents.where('auth_id', '==', uid).get().then(snapshot => {
-				let userData = {};
-				snapshot.forEach((doc) => userData = {...doc.data(), id: doc.id});
+				firebase.auth().signInWithEmailAndPassword(email, password)
+					.then(({user}) => {
+						Agents.where('auth_id', '==', user.uid).get().then(snapshot => {
+							let userData = {};
+							snapshot.forEach((doc) => userData = {...doc.data(), id: doc.id});
 
-				this.setState({isSubmitting: false});
-				this.props.setUserModel(userData);
-				this.props.history.push('/home');
-			});
-		})
-		.catch(err => {
-			console.log(err);
-			const errors = Array.isArray(err) ? err[0] : {email: err.message};
-			this.setState({errors, isSubmitting: false});
+							this.setState({loading: false});
+							this.props.setUserModel(userData);
+							this.props.history.push('/home');
+						});
+					})
+					.catch(({code, message}) => {
+						this.setState({loading: false});
+						const errorMsg = 'The password or email provided is incorrect.';
+						this.props.form.setFields({
+							email: { value: email, errors: [new Error(errorMsg)] },
+						});
+					});
+			}
 		});
-	}
-
-	/**
-	 * Update the value of the input and clear the error message
-	 * @param  {ChangeEvent} e Input event
-	 * @return {Void}   
-	 */
-	onInputChange(e) {
-		const {name, value} = e.target;
-		const errors = { ...this.state.errors};
-		delete errors[name];
-
-		this.setState({[name]: value, errors});
 	}
 
 	/**
@@ -88,37 +68,42 @@ class Login extends Component {
 	 * @return {ReactElement} 
 	 */
 	render() {
-		const {isSubmitting, email, password, errors} = this.state;
+		const {loading, email, password} = this.state;
 		const {history} = this.props;
 
 		return (
 			<div style={{textAlign: 'center'}}>
 				<h1>Welcome to the Alpha Version!</h1>
 				<Col md={5} offset={10}>
-					<Form className="login-form" onSubmit={this.onSignIn}>
-						<Form.Item
-							validateStatus={errors.email ? 'error' : ''}
-						    help={errors.email}
-						>
-							<Input
-								name="email"
-								prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />}
-								placeholder="Enter your email address." 
-								onChange={this.onInputChange}
-								value={email}
-								required
-							/>
+					<Form className="login-form" onSubmit={this.handleSubmit}>
+						<Form.Item>
+							{this.props.form.getFieldDecorator('email', {
+								initialValue: 'st0mxhack@gmail.com',
+								rules: [
+									{required: true, whitespace: true, message: 'Please enter an email address.'},
+									{type: 'email', message: 'The email entered is not valid.'},
+									{max: 50, message: 'The email is too long.'},
+									{min: 3, message: 'The email is too short.'},
+								],
+							})(
+								<Input
+									prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />}
+									placeholder="Enter your email address." 
+									maxLength={50}
+								/>
+							)}	
 						</Form.Item>
 						<Form.Item>
-							<Input
-								name="password"
-								prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />}
-								type="password"
-								placeholder="Enter your password." 
-								onChange={this.onInputChange}
-								value={password}
-								required
-							/>
+							{this.props.form.getFieldDecorator('password', {
+								initialValue: 'secret',
+								rules: [{required: true, message: 'Please enter your password.'},],
+							})(
+								<Input
+									type="password"
+									prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />}
+									placeholder="Enter your password." 
+								/>
+							)}
 						</Form.Item>
 
 						<Form.Item>
@@ -130,7 +115,7 @@ class Login extends Component {
 					        	htmlType="submit"
 					        	className="login-form-button"
 					        	style={{width: '100%'}}
-					        	loading={isSubmitting}
+					        	loading={loading}
 					        >
 					        	Log in
 					        </Button>
@@ -143,7 +128,7 @@ class Login extends Component {
 	}
 }
 
-export default connect(null, mapDispatchToProps)(Login);
+export default connect(null, mapDispatchToProps)(Form.create()(Login));
 
 /**
  * Map the actions and dispatch of the store to the component's props

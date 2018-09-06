@@ -30,14 +30,8 @@ class DoctorSettingsForm extends Component {
 	 */
 	getInitialState() {
 		return {
-			firstname: '',
-			middlename: '',
-			lastname: '',
-			position: '',
 			picture: '',
-			biography: '',
 			loading: false,
-			errors: {},
 		};
 	}
 
@@ -50,21 +44,27 @@ class DoctorSettingsForm extends Component {
 		e.preventDefault();
 
 		const Offices = database.collection('Offices');
-		const {firstname, middlename, lastname, biography, picture} = this.state;
 
-		this.setState({loading: true});
-		Offices.doc(this.props.officeId).update({
-			doctors: [{firstname, middlename, lastname, biography, picture, updated_at: new Date()}],
-		})
-		.then(() => {
-			this.setState({loading: false});
-			alert('The doctor data was successfully updated!');
-		})
-		.catch(err => {
-			console.error(err);
-			this.setState({loading: false});
-			alert('An error occured, please try again.');
+		this.props.form.validateFields((err, values) => {
+			if(!err) {
+				const {firstname, middlename, lastname, biography} = values;
+
+				this.setState({loading: true});
+				Offices.doc(this.props.officeId).update({
+					doctors: [{firstname, middlename, lastname, biography, updated_at: new Date()}],
+				})
+				.then(() => {
+					this.setState({loading: false});
+					alert('The doctor\'s info was successfully updated!');
+				})
+				.catch(err => {
+					console.error(err);
+					this.setState({loading: false});
+					alert('An error occured, please try again.');
+				});
+			}
 		});
+		
 	}
 
 	/**
@@ -98,8 +98,8 @@ class DoctorSettingsForm extends Component {
 	 * @return {ReactElement} 
 	 */
 	render() {
-		const {firstname, middlename, lastname, biography, picture, loading, errors} = this.state;
-		const {officeId, doctor, ...others} = this.props;
+		const {officeId, doctor: {firstname, middlename, lastname, biography}, ...others} = this.props;
+		const {picture, loading} = this.state;
 
 		return (
 			<div {...others}>
@@ -108,36 +108,44 @@ class DoctorSettingsForm extends Component {
 					<Row>
 						<Col span={12}>
 							<Form.Item label="Doctor's first name">
-								<Input 
-									value={firstname}
-									placeholder="Enter the principal doctor's first name"
-									onChange={({target: {value}}) => this.setState({firstname: value})}
-									maxLength={40}
-									required
-								/>
+								{this.props.form.getFieldDecorator('firstname', {
+									initialValue: firstname,
+									rules: [
+										{required: true, whitespace: true, message: 'Please enter the doctor\'s first name.'},
+										{max: 30, message: 'The first name needs to be less than 30 characters.'},
+										{min: 2, message: 'The first name you entered is too short.'},
+									],
+								})(
+									<Input placeholder="Enter the principal doctor's first name." maxLength={30} />
+								)}
 							</Form.Item>
 							<Form.Item label="Doctor's middle name">
-								<Input 
-									value={middlename}
-									placeholder="(Optional) Enter the middle name or initial"
-									onChange={({target: {value}}) => this.setState({middlename: value})}
-									maxLength={40}
-								/>
+								{this.props.form.getFieldDecorator('middlename', {
+									initialValue: middlename,
+									rules: [
+										{max: 30, message: 'The middle name needs to be less than 30 characters.'},
+									],
+								})(
+									<Input placeholder="Enter the middle name or initial. (Optional)" maxLength={30} />
+								)}
 							</Form.Item>
 							<Form.Item label="Doctor's last name">
-								<Input 
-									value={lastname}
-									placeholder="Enter the last name"
-									onChange={({target: {value}}) => this.setState({lastname: value})}
-									maxLength={40}
-									required
-								/>
+								{this.props.form.getFieldDecorator('lastname', {
+									initialValue: lastname,
+									rules: [
+										{required: true, whitespace: true, message: 'Please enter the doctor\'s last name.'},
+										{max: 30, message: 'The last name needs to be less than 30 characters.'},
+										{min: 2, message: 'The last name you entered is too short.'},
+									],
+								})(
+									<Input placeholder="Enter the last name." maxLength={30} />
+								)}
 							</Form.Item>
 						</Col>
 						<Col span={12}>
 							<div style={{width: 375, height: 220, margin: '0 auto 3em auto', background: `url("${picture}")`}}>
 								<ImageCropper
-									text="Upload a photo of your practice"
+									text="Upload a photo of the doctor"
 									isBack={true}
 									apply={this.handleImageUpload}
 								/>
@@ -145,14 +153,20 @@ class DoctorSettingsForm extends Component {
 						</Col>
 					</Row>
 					<Form.Item label="Doctor's biography">
-						<Input.TextArea
-							value={biography}
-							rows={5}
-							placeholder="Tell us a little bit more about the doctor behind the practice"
-							onChange={({target: {value}}) => this.setState({biography: value})}
-							maxLength={300}
-							required
-						/>
+						{this.props.form.getFieldDecorator('biography', {
+							initialValue: biography,
+							rules: [
+								{required: true, whitespace: true, message: 'Please enter the doctor\'s biography.'},
+								{max: 500, message: 'The biography needs to be less than 500 characters.'},
+								{min: 30, message: 'The biography you entered is too short.'},
+							],
+						})(
+							<Input.TextArea
+								placeholder="Tell us a little bit more about the doctor behind the practice"
+								maxLength={500}
+								rows={5}
+							/>
+						)}
 					</Form.Item>
 
 					<Form.Item>
@@ -177,4 +191,4 @@ DoctorSettingsForm.propTypes = {
 	officeId: PropTypes.string.isRequired,
 };
 
-export default DoctorSettingsForm;
+export default Form.create()(DoctorSettingsForm);

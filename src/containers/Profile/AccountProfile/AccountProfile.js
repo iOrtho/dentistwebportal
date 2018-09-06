@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Layout, Button, Input, Icon, Col, Form } from 'antd';
+import { Button, Input, Icon, Col, Form } from 'antd';
 import { database } from 'config/firebase';
 import Loading from 'components/LoadingSpinner';
 
@@ -12,7 +12,7 @@ class AccountProfile extends Component {
 
 		this.state = this.getInitialState();
 
-		this.handleUpdateProfile = this.handleUpdateProfile.bind(this);
+		this.handleSubmit = this.handleSubmit.bind(this);
 	}
 
 	/**
@@ -21,8 +21,6 @@ class AccountProfile extends Component {
 	 */
 	getInitialState() {
 		return {
-			firstname: '',
-			lastname: '',
 			photo: '',
 			loading: false,
 		};
@@ -32,32 +30,37 @@ class AccountProfile extends Component {
 	 * Load the user's information in the form fields
 	 */
 	componentDidMount() {
-		const {firstname, lastname, photo} = this.props.user;
-		this.setState({firstname, lastname, photo});
+		this.setState({photo: this.props.user.photo});
 	}
 
 	/**
 	 * Submit request to update the database entry of the agent
 	 * @return {Void} 
 	 */
-    handleUpdateProfile(e) {
+    handleSubmit(e) {
     	e.preventDefault();
-    	this.setState({loading :true});
+		const Agents = database.collection('Agents');
+		const {id} = this.props.user;
 
-    	const {id} = this.props.user;
-    	const {firstname, lastname} = this.state;
-    	const name = `${firstname} ${lastname}`;
-    	const Agents = database.collection('Agents');
+    	this.props.form.validateFields((err, values) => {
+    		if(!err) {
+		    	const {firstname, middlename, lastname} = values;
+		    	const name = `${firstname} ${middlename ? middlename+' ' : '' }${lastname}`;
 
-    	Agents.doc(id).update({firstname, lastname, name}).then(() => {
-    		this.setState({loading: false});
-    		this.props.onUpdate({firstname, lastname});
-    		alert('Your Agent profile was successfully updated!');
-    	})
-    	.catch(err => {
-    		this.setState({loading: false});
-    		console.warn(err);
+    			this.setState({loading: true});
+		    	Agents.doc(id).update({firstname, lastname, name})
+			    	.then(() => {
+			    		this.setState({loading: false});
+			    		this.props.onUpdate({firstname, lastname, name});
+			    		alert('Your Agent profile was successfully updated!');
+			    	})
+			    	.catch(err => {
+			    		this.setState({loading: false});
+			    		console.error(err);
+			    	});
+    		}
     	});
+    	
     }
 
 	/**
@@ -65,57 +68,67 @@ class AccountProfile extends Component {
 	 * @return {ReactElement} 
 	 */
 	render() {
-		const {firstname, lastname, loading} = this.state;
-
-		const style = {
-			width: 640,
-			margin: '24px auto',
-			padding: 24,
-			backgroundColor: '#fff',
-		};
+		const {loading} = this.state;
+		const {firstname, lastname} = this.props.user;
 
 		return (
-			<Layout.Content style={style}>
+			<Col sm={8} style={{...this.props.style}}>
+				<h2>Update my profile</h2>
 				<p>Your profile is important to us and to the customers.</p>
-				<p>It's used to keep track of the agents's activity and is also shown to the customers to provide a more <b>human</b> experience.</p>
+				<p>It's used to keep track of the app's activity and also to provide a more <b>human</b> experience.</p>
 				
-				<Col sm={10}>
-					<Form onSubmit={this.handleUpdateProfile}>
-						<Form.Item label="First name">
-							<Input 
-								value={firstname}
-								placeholder="Enter your first name."
-								onChange={({target: {value}}) => this.setState({firstname: value})}
-								maxLength={25}
-								required
-							/>
-						</Form.Item>
+				<Form onSubmit={this.handleSubmit}>
+					<Form.Item label="First name">
+						{this.props.form.getFieldDecorator('firstname', {
+							initialValue: firstname,
+							rules: [
+								{required: true, whitespace: true, message: 'Please enter your first name'},
+								{max: 30, message: 'The first name you entered is too long.'},
+								{min: 2, message: 'The first name you entered is too short.'},
+							],
+						})(
+							<Input placeholder="Enter your first name." maxLength={30} />
+						)}
+					</Form.Item>
 
-						<Form.Item label="Last name">
-							<Input 
-								value={lastname}
-								placeholder="Enter your last name."
-								onChange={({target: {value}}) => this.setState({lastname: value})}
-								maxLength={25}
-								required
-							/>
-						</Form.Item>
+					<Form.Item label="Middle name">
+						{this.props.form.getFieldDecorator('middlename', {
+							initialValue: '',
+							rules: [
+								{max: 30, message: 'The middle name you entered is too long.'},
+							],
+						})(
+							<Input placeholder="Or your initial if you prefer. (Optional)" maxLength={30} />
+						)}
+					</Form.Item>
 
-						<Form.Item>
-							<Button
-								type="primary"
-								htmlType="submit" 
-								size="large"
-								loading={loading}
-								onClick={this.handleUpdateProfile}
-								style={{width: '100%'}}
-							>
-								Save the changes
-							</Button>
-						</Form.Item>
-					</Form>
-				</Col>
-			</Layout.Content>
+					<Form.Item label="Last name">
+						{this.props.form.getFieldDecorator('lastname', {
+							initialValue: lastname,
+							rules: [
+								{required: true, whitespace: true, message: 'Please enter your last name'},
+								{max: 30, message: 'The last name you entered is too long.'},
+								{min: 2, message: 'The last name you entered is too short.'},
+							],
+						})(
+							<Input placeholder="Enter your first name." maxLength={30} />
+						)}
+					</Form.Item>
+
+					<Form.Item>
+						<Button
+							type="primary"
+							htmlType="submit" 
+							size="large"
+							loading={loading}
+							onClick={this.handleSubmit}
+							style={{width: '100%'}}
+						>
+							Save the changes
+						</Button>
+					</Form.Item>
+				</Form>
+			</Col>
 		);
 	}
 }
@@ -123,6 +136,11 @@ class AccountProfile extends Component {
 AccountProfile.propTypes = {
 	user: PropTypes.object.isRequired,
 	onUpdate: PropTypes.func.isRequired,
+	style: PropTypes.object,
 };
 
-export default AccountProfile;
+AccountProfile.defaultProps = {
+	style: {},
+};
+
+export default Form.create()(AccountProfile);

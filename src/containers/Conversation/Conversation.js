@@ -155,7 +155,10 @@ class Conversation extends Component {
 			content: message,
 		};
 
-		if(message.length < 3) return;
+		if(message.length < 3) {
+			alert('Error: Message entered is too short.');
+			return;
+		}
 		this.setState({message: ''});
 		
 		Messages.doc().set({ body, recipient, Author, created_at: new Date() })
