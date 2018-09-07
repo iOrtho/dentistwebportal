@@ -1,15 +1,12 @@
-import React from 'react';
-import createPlugin from 'bugsnag-react';
 import bugsnag from 'bugsnag-js';
+import bugsnagClient from './lib/bugsnag';
+import React from 'react';
 import ReactDOM from 'react-dom';
 import Router from './router';
 import { Provider } from 'react-redux';
 import store from './store/store';
 import registerServiceWorker from './registerServiceWorker';
-
-const {REACT_APP_BUGSNAG_KEY: BUGSNAG_KEY} = process.env;
-const bugsnagClient = bugsnag(BUGSNAG_KEY);
-
+import createPlugin from 'bugsnag-react';
 
 const ErrorBoundary = bugsnagClient.use(createPlugin(React));
 const app = (
@@ -22,5 +19,3 @@ const app = (
 
 ReactDOM.render(app, document.getElementById('root'));
 registerServiceWorker();
-
-bugsnagClient.notify(new Error('Test error'))
