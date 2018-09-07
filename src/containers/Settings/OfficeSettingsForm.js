@@ -24,12 +24,9 @@ class OfficeSettingsForm extends Component {
 	 */
 	getInitialState() {
 		return {
-			name: '',
-			description: '',
 			photo: '',
 			locations: [],
 			loading: false,
-			errors: {},
 		};
 	}
 
@@ -37,8 +34,8 @@ class OfficeSettingsForm extends Component {
 	 * Load the office's information into the form
 	 */
 	componentDidMount() {
-		const {name, description, locations, pictures} = this.props.office;
-		this.setState({name, description, locations, photo: pictures[0]});
+		const {locations, pictures} = this.props.office;
+		this.setState({locations, photo: pictures[0]});
 	}
 
 	/**
@@ -47,9 +44,9 @@ class OfficeSettingsForm extends Component {
 	 * @return {Void}      
 	 */
 	fetchRelatedIds(cb) {
-		const {id} = this.props.office;
 		const Agents = database.collection('Agents');
 		const Messages = database.collection('Messages');
+		const {id} = this.props.office;
 		const agentsId = [];
 		const msgsId = [];
 
@@ -91,39 +88,34 @@ class OfficeSettingsForm extends Component {
 		const Agents = database.collection('Agents');
 		const Messages = database.collection('Messages');
 
-		this.setState({loading: true});
-		this.fetchRelatedIds((err, {agents, messages}) => {
-			if(err) {
-				this.setState({loading: false});
-				return;
+		this.props.form.validateFields((err, values) => {
+			if(!err) {
+				this.setState({loading: true});
+				this.fetchRelatedIds((err, {agents, messages}) => {
+					if(err) {
+						this.setState({loading: false});
+						return;
+					}
+
+					const batch = database.batch();
+					const {name, description} = values;
+					const {office} = this.props;
+					const officeUpdate = { name, description, updated_at: new Date() };
+					const agentUpdate = { 'Office.name': name };
+					const msgUpdate = { 'Author.Office.name': name };
+
+					batch.update(Offices.doc(office.id), officeUpdate);
+					agents.forEach(id => batch.update(Agents.doc(id), agentUpdate));
+					messages.forEach(id => batch.update(Messages.doc(id), msgUpdate));
+
+					batch.commit().then(() => {
+						this.setState({loading: false});
+						alert('Your office was successfully updated!');
+					});
+				});
 			}
-
-			const batch = database.batch();
-			const {name, description, locations} = this.state;
-			const {office} = this.props;
-			const officeUpdate = { 
-				name,
-				description,
-				locations,
-				updated_at: new Date(),
-			};
-			const agentUpdate = {
-				'Office.name': name,
-			};
-			const msgUpdate = {
-				'Author.Office.name': name,
-			};
-
-			batch.update(Offices.doc(office.id), officeUpdate);
-			agents.forEach(id => batch.update(Agents.doc(id), agentUpdate));
-			messages.forEach(id => batch.update(Messages.doc(id), msgUpdate));
-
-			batch.commit().then(() => {
-				this.props.updateOfficeModel(officeUpdate);
-				this.setState({loading: false});
-				alert('Your office was successfully updated!');
-			});
 		});
+		
 	}
 
 	/**
@@ -155,11 +147,11 @@ class OfficeSettingsForm extends Component {
 	 * @return {ReactElement} 
 	 */
 	render() {
-		const {name, description, locations, photo, loading, errors} = this.state;
-		const {id} = this.props.office;
+		const {locations, photo, loading, errors} = this.state;
+		const {id, name, description} = this.props.office;
 		const divProps = { ...this.props };
-		delete divProps.office;
 		delete divProps.updateOfficeModel;
+		delete divProps.office;
 
 		return (
 			<div {...divProps}>
@@ -172,13 +164,16 @@ class OfficeSettingsForm extends Component {
 							</Form.Item>
 
 							<Form.Item label="Office name">
-								<Input 
-									value={name}
-									placeholder="Enter your office's name."
-									onChange={({target: {value}}) => this.setState({name: value})}
-									maxLength={40}
-									required
-								/>
+								{this.props.form.getFieldDecorator('name', {
+									initialValue: name,
+									rules: [
+										{required: true, whitespace: true, message: 'Please enter your pratice\'s name.'},
+										{max: 40, message: 'The name needs to be less than 40 characters.'},
+										{min: 3, message: 'The name you entered is too short.'},
+									],
+								})(
+									<Input placeholder="Enter your practice's name." maxLength={40} />
+								)}
 							</Form.Item>
 						</Col>
 						<Col span={12}>
@@ -193,14 +188,20 @@ class OfficeSettingsForm extends Component {
 					</Row>
 
 					<Form.Item label="Office description">
-						<Input.TextArea
-							value={description}
-							rows={5}
-							placeholder="Write a couple of sentence about what your practice is all about."
-							onChange={({target: {value}}) => this.setState({description: value})}
-							maxLength={300}
-							required
-						/>
+						{this.props.form.getFieldDecorator('description', {
+							initialValue: description,
+							rules: [
+								{required: true, whitespace: true, message: 'Please enter your pratice\'s description.'},
+								{max: 500, message: 'The description needs to be less than 500 characters.'},
+								{min: 40, message: 'The description you entered is too short.'},
+							],
+						})(
+							<Input.TextArea
+								rows={5}
+								placeholder="Write a couple of sentence about what your practice is all about."
+								maxLength={500}
+							/>
+						)}
 					</Form.Item>
 
 					<Form.Item>
@@ -225,4 +226,4 @@ OfficeSettingsForm.propTypes = {
 	updateOfficeModel: PropTypes.func.isRequired,
 };
 
-export default OfficeSettingsForm;
+export default Form.create()(OfficeSettingsForm);

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { Layout, Button, Input, Icon, Col, Form } from 'antd';
+import { Button, Input, Icon, Col, Form } from 'antd';
 import firebase, { auth, database } from 'config/firebase';
 import UserAction from 'store/actions/user';
 import Loading from 'components/LoadingSpinner';
@@ -13,9 +13,7 @@ class UpdatePassword extends Component {
 		super(props);
 
 		this.state = this.getInitialState();
-
-		this.onInputChange = this.onInputChange.bind(this);
-		this.handleUpdatePassword = this.handleUpdatePassword.bind(this);
+		this.handleSubmit = this.handleSubmit.bind(this);
 	}
 
 	/**
@@ -24,10 +22,7 @@ class UpdatePassword extends Component {
 	 */
 	getInitialState() {
 		return {
-			password: '',
-			new_password: '',
 			loading: false,
-			errors: {},
 		};
 	}
 
@@ -35,115 +30,105 @@ class UpdatePassword extends Component {
 	 * Submit request to update the password of the agent
 	 * @return {Void} 
 	 */
-    handleUpdatePassword(e) {
+    handleSubmit(e) {
     	e.preventDefault();
-    	this.setState({loading: true});
+
+    	this.props.form.validateFields((err, values) => {
+    		if(!err) {
+    			this.setState({loading: true});
 		
-		const {id, email} = this.props.user;
-    	const {password, new_password} = this.state;
-    	const cred = firebase.auth.EmailAuthProvider.credential(email, password);
-    	
-    	auth.currentUser.reauthenticateAndRetrieveDataWithCredential(cred)
-    	.then(() => {
-
-    		auth.currentUser.updatePassword(new_password)
-    		.then(() => {
-	    		this.setState(this.getInitialState());
-	    		alert('Your password was successfully updated!');
-    		}).catch(err => {
-    			this.setState({loading: false, errors: {new_password: err.message}})
-    		});
-    	})
-    	.catch(err => {
-    		const errors = {password: 'The password provided is invalid.'};
-    		this.setState({loading: false, errors});
+				const {id, email} = this.props.user;
+		    	const {password, newpassword} = values;
+		    	const cred = firebase.auth.EmailAuthProvider.credential(email, password);
+		    	
+		    	auth.currentUser.reauthenticateAndRetrieveDataWithCredential(cred)
+			    	.then(() => {
+			    		auth.currentUser.updatePassword(newpassword)
+				    		.then(() => {
+				    			const empty = {value: ''};
+				    			this.props.form.setFields({password: empty, newpassword: empty});
+					    		alert('Your password was successfully updated!');
+				    			this.setState({loading: false});
+				    		})
+				    		.catch(err => {
+				    			this.setState({loading: false});
+				    			console.error(err);
+				    			this.props.form.setFields({
+					    			password: {value: newpassword, errors: [new Error('The new password failed to be updated.')] },
+					    		});
+				    		});
+			    	})
+			    	.catch(err => {
+			    		this.setState({loading: false});
+			    		console.error(err);
+			    		this.props.form.setFields({
+			    			password: {value: password, errors: [new Error('The password provided is invalid.')] },
+			    		});
+			    	});
+    		}
     	});
+    	
     }
-
-    /**
-	 * Update the value of the input and clear the error message
-	 * @param  {ChangeEvent} e Input event
-	 * @return {Void}   
-	 */
-	onInputChange(e) {
-		const {name, value} = e.target;
-		const errors = { ...this.state.errors};
-		delete errors[name];
-
-		this.setState({[name]: value, errors});
-	}
 
 	/**
 	 * Render the component's markup
 	 * @return {ReactElement} 
 	 */
 	render() {
-		const {password, new_password, new_password_confirmation, loading, errors} = this.state;
-
-		const style = {
-			width: 640,
-			margin: '24px auto',
-			padding: 24,
-			backgroundColor: '#fff',
-		};
+		const {loading, errors} = this.state;
 
 		return (
-			<Layout.Content style={style}>
-				<h3>Change my password</h3>
+			<Col sm={8} offset={2} style={{...this.props.style}}>
+				<h2>Change my password</h2>
+				<p>As a measure of security, changing your password often protects you from security breaches.</p>
 				
-				<Col sm={10}>
-					<Form className="login-form" onSubmit={this.handleUpdateProfile}>
-						<Form.Item
-							label="Password"
-						    validateStatus={errors.password ? 'error' : ''}
-						    help={errors.password}
-						>
-							<Input
-								name="password"
-								type="password"
-								value={password}
-								placeholder="Enter your password password."
-								onChange={this.onInputChange}
-								required
-							/>
-						</Form.Item>
+				<Form onSubmit={this.handleSubmit}>
+					<Form.Item label="Current password">
+						{this.props.form.getFieldDecorator('password', {
+							rules: [
+								{required: true, message: 'Please enter your current password.'},
+							],
+						})(
+							<Input type="password" placeholder="Enter your current password." />
+						)}
+					</Form.Item>
 
-						<Form.Item
-							label="New password"
-						    validateStatus={errors.new_password ? 'error' : ''}
-						    help={errors.new_password}
-						>
-							<Input 
-								name="new_password"
-								type="password"
-								value={new_password}
-								placeholder="Enter your new password."
-								onChange={this.onInputChange}
-								required
-							/>
-						</Form.Item>
+					<Form.Item label="New password">
+						{this.props.form.getFieldDecorator('newpassword', {
+							rules: [
+								{required: true, message: 'Please enter your new password.'},
+								{min: 6, message: 'Your new password needs to be at least 6 characters long.'},
+							],
+						})(
+							<Input type="password" placeholder="Enter your new password." />
+						)}
+					</Form.Item>
 
-						<Form.Item>
-							<Button
-								type="primary"
-								htmlType="submit" 
-								size="large"
-								loading={loading}
-								onClick={this.handleUpdatePassword}
-								style={{width: '100%'}}
-							>
-								Change password
-							</Button>
-						</Form.Item>
-					</Form>
-				</Col>
-			</Layout.Content>
+					<Form.Item>
+						<Button
+							type="primary"
+							htmlType="submit" 
+							size="large"
+							loading={loading}
+							onClick={this.handleSubmit}
+							style={{width: '100%'}}
+						>
+							Change password
+						</Button>
+					</Form.Item>
+				</Form>
+			</Col>
 		);
 	}
 }
 
 UpdatePassword.propTypes = {
 	user: PropTypes.object.isRequired,
+	style: PropTypes.object,
 };
 
-export default UpdatePassword;
+UpdatePassword.defaultProps = {
+	style: {},
+};
+
+export default Form.create()(UpdatePassword);

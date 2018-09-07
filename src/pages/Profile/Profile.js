@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Layout } from 'antd';
+import { Layout, Row } from 'antd';
 import { connect } from 'react-redux';
 import UserAction from 'store/actions/user';
 import AccountProfile from 'containers/Profile/AccountProfile';
@@ -31,17 +31,24 @@ class Profile extends Component {
 	 */
 	render() {
 		const {user, setUserModel} = this.props;
-
 		const style = { 
 			display: 'flex',
 			flexDirection: 'column',
 			alignItems: 'center',
+			padding: '0 50px',
+		};
+
+		const colStyle = {
+			padding: 24,
+			backgroundColor: '#fff',
 		};
 
 		return (
 			<Layout.Content style={style}>
-				<AccountProfile user={user} onUpdate={setUserModel} />
-				<UpdatePassword user={user} />
+				<Row type="flex" justify="center" style={{marginTop: '1em'}}> 
+					<AccountProfile user={user} onUpdate={setUserModel} style={colStyle} />
+					<UpdatePassword user={user} style={colStyle} />
+				</Row>
   			</Layout.Content>
 		);
 	}
