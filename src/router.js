@@ -19,6 +19,11 @@ const LoadableSignUp = Loadable({
 	loading,
 });
 
+const LoadableForgotPassword = Loadable({
+	loader: () => import('./pages/Auth/ForgotPassword/index'),
+	loading,
+});
+
 const LoadableHome = Loadable({
 	loader: () => import('./pages/Home/index'),
 	loading,
@@ -58,6 +63,7 @@ const router = () => {
 			<App>
 				<Route exact path="/" component={LoadableLogin} />
 				<Route path="/signup" component={LoadableSignUp} />
+				<Route path="/forgot" component={LoadableForgotPassword} />
 				<PrivateRoute path="/home" render={(props) => renderDashboardPage(LoadableHome, props)} />
 				<PrivateRoute path="/profile" render={(props) => renderDashboardPage(LoadableProfile, props)} />
 				<PrivateRoute path="/office-details" render={(props) => renderDashboardPage(LoadableOfficeSettings, props)} />

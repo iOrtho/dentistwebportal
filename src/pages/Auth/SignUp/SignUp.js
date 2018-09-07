@@ -47,7 +47,7 @@ class SignUp extends Component {
 				Office: { id, name },
 				photo: '',
 				auth_id: user.uid,
-				AuthActivity: [],
+				AuthActivity: {},
 				Role: {},
 				created_at: new Date(),
 				updated_at: new Date(),
