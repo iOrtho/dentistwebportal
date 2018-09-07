@@ -11,7 +11,7 @@ const CustomerDetails = ({customer, style: customStyle}) => {
 	};
 	const customerInfo = {
 		Name: customer.name,
-		'Downloaded-on': moment(customer.created_at.toDate()).format('MMM D, YYYY'),
+		'Downloaded-App-on': moment(customer.created_at.toDate()).format('MMM D, YYYY'),
 	};
 
 	return (
@@ -20,7 +20,7 @@ const CustomerDetails = ({customer, style: customStyle}) => {
 			{Object.keys(customerInfo).map((label, i) => {
 				return (
 					<div key={i}>
-						<label>{label.replace('-', ' ')}:</label>
+						<label>{label.replace(/-/gi, ' ')}:</label>
 						<p style={infoStyle}>{customerInfo[label]}</p>
 					</div>
 				);	
