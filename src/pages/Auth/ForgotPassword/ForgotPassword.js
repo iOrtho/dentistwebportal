@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { Button, Form, Layout, Input, Col, Icon } from 'antd';
 import { auth, database } from 'config/firebase';
@@ -10,6 +11,7 @@ class ForgotPassword extends Component {
 		super(props);
 
 		this.state = this.getInitialState();
+		this.sendResetEmail = this.sendResetEmail.bind(this);
 		this.handleSubmit = this.handleSubmit.bind(this);
 	}
 
@@ -24,7 +26,46 @@ class ForgotPassword extends Component {
 	}
 
 	/**
-	 * Send the reset link to the user's email address
+	 * Send the Firebase auth reset link to the provided email
+	 * @param  {String} email The email of the user
+	 * @param {String} id The agent's model ID
+	 * @return {Void}       
+	 */
+	sendResetEmail(email, id) {
+		const Agents = database.collection('Agents');
+		const agentEntry = Agents.doc(id);
+		const saveAuthActionAttempt = (success) => {
+			const dynamicKeyUpdate = {};
+			dynamicKeyUpdate[`AuthActivity.${Date.now()}`] = {
+				success,
+				type: 'REQUEST_RESET_PWD_LINK',
+				created_at: new Date(),
+			};
+			agentEntry.update(dynamicKeyUpdate);
+		};
+
+		auth.sendPasswordResetEmail(email).then(() => {
+			alert('The email was successfully sent!');
+			this.setState({loading: false});
+
+			saveAuthActionAttempt(true);
+		})
+		.catch(({code, message}) => {
+			this.setState({loading: false});
+			console.error({code, message});
+
+			if(code.match('not-found')) {
+				this.props.form.setFields({
+					email: { value: email, errors: [new Error('We couldn\'t find a user with the email address you entered in our system.')] }
+				});
+			}
+
+			saveAuthActionAttempt(false);			
+		});
+	}
+
+	/**
+	 * Handle the form validation and verification of the user before sending reset link
 	 * @param  {SubmitEvent} e event
 	 * @return {Void}   
 	 */
@@ -32,17 +73,36 @@ class ForgotPassword extends Component {
 		e.preventDefault();
 
 		const Agents = database.collection('Agents');
-		const {email} = this.state;
+		const {id} = this.props.office;
 
 		this.props.form.validateFields((err, value) => {
 			if(!err) {
 				const {email} = value;
 
-				Agents.where('email', '==', email).limit(1).get()
-					.then(() => {
-						// stuff..
-					})
-					.catch(console.error);
+				this.setState({loading: true});
+				Agents.where('Office.id','==', id).where('email', '==', email).limit(1).get()
+				.then(snapshot => {
+					let userIsFromThisOffice = false;
+					let agentId;
+					snapshot.forEach(doc => {
+						doc.data().email == email ? userIsFromThisOffice = true : null;
+						agentId = doc.id;
+					});
+					
+					if(userIsFromThisOffice) {
+						this.sendResetEmail(email, agentId);
+						return;
+					}
+
+					this.setState({loading: false});
+					this.props.form.setFields({
+						email: { value: email, errors: [new Error('We couldn\'t find a user with your email in this practice\' system.')] }
+					});
+				})
+				.catch(err => {
+					console.error(err);
+					this.setState({loading: false});
+				});
 			}
 		});
 		
@@ -55,12 +115,13 @@ class ForgotPassword extends Component {
 	render() {
 		const {loading} = this.state;
 		const {history} = this.props;
+		const style = { textAlign: 'center', display: 'flex', flexDirection: 'column' };
 
 		return (
-			<div style={{textAlign: 'center'}}>
+			<div style={style}>
 				<h1>Reset your password</h1>
 				<p>Did you forget your password? Just enter your email address below and we will send you a link to your inbox to reset it.</p>
-				<Col md={5} offset={10}>
+				<Col md={7} style={{alignSelf: 'center'}}>
 					<Form onSubmit={this.handleSubmit}>
 						<Form.Item>
 							{this.props.form.getFieldDecorator('email', {
@@ -89,7 +150,7 @@ class ForgotPassword extends Component {
 					        >
 					        	Send reset password link
 					        </Button>
-					          Remembered your password? No problem <Link to="/login">click here to login!</Link>
+					          Remembered your password? No problem <Link to="/">click here to login!</Link>
 						</Form.Item>
 					</Form>
 				</Col>
@@ -98,4 +159,15 @@ class ForgotPassword extends Component {
 	}
 }
 
-export default Form.create()(ForgotPassword);
+export default connect(mapStateToProps)(Form.create()(ForgotPassword));
+
+/**
+ * Map the store's state to the component's props
+ * @param  {Object} state.office The practice's Office model 
+ * @return {Object}       
+ */
+function mapStateToProps({office}) {
+	return {
+		office,
+	};
+}
