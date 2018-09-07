@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Button, Input, Icon, Col, Form } from 'antd';
 import { database } from 'config/firebase';
 import Loading from 'components/LoadingSpinner';
+import bugsnagClient from 'lib/bugsnag';
 
 class AccountProfile extends Component {
 
@@ -11,7 +12,6 @@ class AccountProfile extends Component {
 		super(props);
 
 		this.state = this.getInitialState();
-
 		this.handleSubmit = this.handleSubmit.bind(this);
 	}
 
@@ -56,7 +56,7 @@ class AccountProfile extends Component {
 			    	})
 			    	.catch(err => {
 			    		this.setState({loading: false});
-			    		console.error(err);
+			    		bugsnagClient.notify(err);
 			    	});
     		}
     	});

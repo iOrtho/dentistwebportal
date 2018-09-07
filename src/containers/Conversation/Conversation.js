@@ -8,6 +8,7 @@ import Message from 'components/Message';
 import ChatDayLimit from 'components/Chat/ChatDayLimit';
 import CustomerDetails from 'components/Chat/CustomerDetails';
 import Loading from 'components/LoadingSpinner';
+import bugsnagClient from 'lib/bugsnag';
 
 class Conversation extends Component {
 
@@ -100,7 +101,6 @@ class Conversation extends Component {
 	        	const index = newChat.findIndex(({id}) => id == data.id);
 	        	newChat[index] = data;
 	        	this.setState({chat: newChat});
-	        	console.log(data)
 	        }
 
 	        if (change.type === 'removed') {
@@ -162,12 +162,7 @@ class Conversation extends Component {
 		this.setState({message: ''});
 		
 		Messages.doc().set({ body, recipient, Author, created_at: new Date() })
-		.then(() => {
-			console.log('Successfully sent message!');
-		})
-		.catch((err) => {
-			console.error('Error:', err);
-		});
+		.catch(bugsnagClient.notify);
 	}
 
 	/**

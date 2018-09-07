@@ -4,6 +4,7 @@ import { database, storage } from 'config/firebase';
 import UserAction from 'store/actions/user';
 import ImageCropper from 'react-avatar-image-cropper';
 import PropTypes from 'prop-types';
+import bugsnagClient from 'lib/bugsnag';
 
 class OfficeSettingsForm extends Component {
 
@@ -71,7 +72,7 @@ class OfficeSettingsForm extends Component {
 
 			cb(null, {agents: agentsId, messages: msgsId});
 		}).catch(err => {
-			console.warn(err);
+			bugsnagClient.notify(err, {severity: 'error'});
 			cb(err);
 		});
 	}
@@ -108,10 +109,15 @@ class OfficeSettingsForm extends Component {
 					agents.forEach(id => batch.update(Agents.doc(id), agentUpdate));
 					messages.forEach(id => batch.update(Messages.doc(id), msgUpdate));
 
-					batch.commit().then(() => {
-						this.setState({loading: false});
-						alert('Your office was successfully updated!');
-					});
+					batch.commit()
+						.then(() => {
+							this.setState({loading: false});
+							alert('Your office was successfully updated!');
+						})
+						.catch(err => {
+							bugsnagClient.notify(err, {severity: 'error'});							
+							this.setState({loading: false});
+						});
 				});
 			}
 		});
@@ -135,11 +141,11 @@ class OfficeSettingsForm extends Component {
 					.then(url => {
 						Offices.doc(id).update({"pictures": [url]})
 							.then(() => this.setState({photo: url}))
-							.catch(console.error);
+							.catch(bugsnagClient.notify);
 					})
-					.catch(console.error);
+					.catch(bugsnagClient.notify);
 			})
-			.catch(console.error);
+			.catch(bugsnagClient.notify);
 	}
 
 	/**

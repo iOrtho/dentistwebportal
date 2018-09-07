@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { Button, Form, Layout, Input, Col, Icon } from 'antd';
 import { auth, database } from 'config/firebase';
+import bugsnagClient from 'lib/bugsnag';
 
 class ForgotPassword extends Component {
 
@@ -44,24 +45,26 @@ class ForgotPassword extends Component {
 			agentEntry.update(dynamicKeyUpdate);
 		};
 
-		auth.sendPasswordResetEmail(email).then(() => {
-			alert('The email was successfully sent!');
-			this.setState({loading: false});
+		auth.sendPasswordResetEmail(email)
+			.then(() => {
+				alert('The email was successfully sent!');
+				this.setState({loading: false});
 
-			saveAuthActionAttempt(true);
-		})
-		.catch(({code, message}) => {
-			this.setState({loading: false});
-			console.error({code, message});
+				saveAuthActionAttempt(true);
+			})
+			.catch((error) => {
+				this.setState({loading: false});
 
-			if(code.match('not-found')) {
-				this.props.form.setFields({
-					email: { value: email, errors: [new Error('We couldn\'t find a user with the email address you entered in our system.')] }
-				});
-			}
+				if(error.code.match('not-found')) {
+					this.props.form.setFields({
+						email: { value: email, errors: [new Error('We couldn\'t find a user with the email address you entered in our system.')] }
+					});
+				} else {
+					bugsnagClient.notify(error, {severity: 'info'});
+				}
 
-			saveAuthActionAttempt(false);			
-		});
+				saveAuthActionAttempt(false);			
+			});
 	}
 
 	/**
@@ -81,28 +84,28 @@ class ForgotPassword extends Component {
 
 				this.setState({loading: true});
 				Agents.where('Office.id','==', id).where('email', '==', email).limit(1).get()
-				.then(snapshot => {
-					let userIsFromThisOffice = false;
-					let agentId;
-					snapshot.forEach(doc => {
-						doc.data().email == email ? userIsFromThisOffice = true : null;
-						agentId = doc.id;
-					});
-					
-					if(userIsFromThisOffice) {
-						this.sendResetEmail(email, agentId);
-						return;
-					}
+					.then(snapshot => {
+						let userIsFromThisOffice = false;
+						let agentId;
+						snapshot.forEach(doc => {
+							doc.data().email == email ? userIsFromThisOffice = true : null;
+							agentId = doc.id;
+						});
+						
+						if(userIsFromThisOffice) {
+							this.sendResetEmail(email, agentId);
+							return;
+						}
 
-					this.setState({loading: false});
-					this.props.form.setFields({
-						email: { value: email, errors: [new Error('We couldn\'t find a user with your email in this practice\' system.')] }
+						this.setState({loading: false});
+						this.props.form.setFields({
+							email: { value: email, errors: [new Error('We couldn\'t find a user with your email in this practice\' system.')] }
+						});
+					})
+					.catch(err => {
+						bugsnagClient.notify(err, {severity: 'error'});
+						this.setState({loading: false});
 					});
-				})
-				.catch(err => {
-					console.error(err);
-					this.setState({loading: false});
-				});
 			}
 		});
 		

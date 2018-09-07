@@ -3,6 +3,7 @@ import { Layout, Form, Input, Col, Row, Button } from 'antd';
 import { database, storage } from 'config/firebase';
 import ImageCropper from 'react-avatar-image-cropper';
 import PropTypes from 'prop-types';
+import bugsnagClient from 'lib/bugsnag';
 
 class DoctorSettingsForm extends Component {
 
@@ -58,7 +59,7 @@ class DoctorSettingsForm extends Component {
 					alert('The doctor\'s info was successfully updated!');
 				})
 				.catch(err => {
-					console.error(err);
+					bugsnagClient.notify(err, {severity: 'error'});
 					this.setState({loading: false});
 					alert('An error occured, please try again.');
 				});
@@ -86,11 +87,11 @@ class DoctorSettingsForm extends Component {
 							"doctors": [{ ...doctor, picture: url }],
 						})
 							.then(() => this.setState({picture: url}))
-							.catch(console.error);
+							.catch(bugsnagClient.notify);
 					})
-					.catch(console.error);
+					.catch(bugsnagClient.notify);
 			})
-			.catch(console.error);
+			.catch(bugsnagClient.notify);
 	}
 
 	/**

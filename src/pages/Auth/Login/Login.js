@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import UserAction from 'store/actions/user';
 import { Button, Form, Layout, Input, Col, Icon } from 'antd';
 import firebase, { database } from 'config/firebase';
+import bugsnagClient from 'lib/bugsnag';
 
 class Login extends Component {
 
@@ -52,7 +53,8 @@ class Login extends Component {
 							this.props.history.push('/home');
 						});
 					})
-					.catch(({code, message}) => {
+					.catch((err) => {
+						bugsnagClient.notify(err, {severity: 'info'});
 						this.setState({loading: false});
 						const errorMsg = 'The password or email provided is incorrect.';
 						this.props.form.setFields({

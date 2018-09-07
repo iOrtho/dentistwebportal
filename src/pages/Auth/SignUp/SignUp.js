@@ -4,6 +4,7 @@ import { auth, database } from 'config/firebase';
 import UserAction from 'store/actions/user';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
+import bugsnagClient from 'lib/bugsnag';
 
 class SignUp extends Component {
 
@@ -37,33 +38,35 @@ class SignUp extends Component {
 		const {email, password, firstname, middlename, lastname} = fields;
 		const {id, name} = this.props.office;
 
-		auth.createUserWithEmailAndPassword(email, password).then(({user}) => {
-			const data = {
-				email,
-				firstname,
-				middlename,
-				lastname,
-				name: `${firstname} ${middlename ? middlename+' ' : '' }${lastname}`,
-				Office: { id, name },
-				photo: '',
-				auth_id: user.uid,
-				AuthActivity: {},
-				Role: {},
-				created_at: new Date(),
-				updated_at: new Date(),
-			};
+		auth.createUserWithEmailAndPassword(email, password)
+			.then(({user}) => {
+				const data = {
+					email,
+					firstname,
+					middlename,
+					lastname,
+					name: `${firstname} ${middlename ? middlename+' ' : '' }${lastname}`,
+					Office: { id, name },
+					photo: '',
+					auth_id: user.uid,
+					AuthActivity: {},
+					Role: {},
+					created_at: new Date(),
+					updated_at: new Date(),
+				};
 
-			Agents.add(data).then((doc) => {
+				Agents.add(data)
+					.then((doc) => {
+						this.setState({loading: false});
+						this.props.setUserModel({...data, id: doc.id});
+						this.props.history.push('/home');
+					})
+					.catch(err => bugsnagClient.notify(err, {severity: 'error'}));
+			})
+			.catch(err => {
+				bugsnagClient.notify(err, {severity: 'error'});
 				this.setState({loading: false});
-				this.props.setUserModel({...data, id: doc.id});
-				this.props.history.push('/home');
 			});
-		})
-		.catch(err => {
-			console.error(err);
-			this.setState({loading: false});
-		});
-
 	}
 	
 	/**
@@ -93,7 +96,7 @@ class SignUp extends Component {
 						this.createAccount(values);
 					})
 					.catch(err => {
-						console.error(err);
+						bugsnagClient.notify(err, {severity: 'error'});
 						this.setState({loading: false});
 					});
 			}

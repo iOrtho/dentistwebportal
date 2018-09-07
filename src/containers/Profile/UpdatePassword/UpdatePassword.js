@@ -5,6 +5,7 @@ import { Button, Input, Icon, Col, Form } from 'antd';
 import firebase, { auth, database } from 'config/firebase';
 import UserAction from 'store/actions/user';
 import Loading from 'components/LoadingSpinner';
+import bugsnagClient from 'lib/bugsnag';
 
 class UpdatePassword extends Component {
 
@@ -52,7 +53,7 @@ class UpdatePassword extends Component {
 				    		})
 				    		.catch(err => {
 				    			this.setState({loading: false});
-				    			console.error(err);
+				    			bugsnagClient.notify(err);
 				    			this.props.form.setFields({
 					    			password: {value: newpassword, errors: [new Error('The new password failed to be updated.')] },
 					    		});
@@ -60,7 +61,7 @@ class UpdatePassword extends Component {
 			    	})
 			    	.catch(err => {
 			    		this.setState({loading: false});
-			    		console.error(err);
+			    		bugsnagClient.notify(err);
 			    		this.props.form.setFields({
 			    			password: {value: password, errors: [new Error('The password provided is invalid.')] },
 			    		});
