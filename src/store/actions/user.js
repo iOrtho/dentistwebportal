@@ -31,7 +31,7 @@ export default class User {
 	 * Return the action to reset the user's model
 	 * @return {Object} 
 	 */
-	static restUserModel() {
+	static resetUserModel() {
 		return {
 			type: this.RESET_USER_MODEL,
 		};
