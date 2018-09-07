@@ -1,9 +1,14 @@
 import React from 'react';
 import { Layout, Menu } from 'antd';
+import { auth } from 'config/firebase';
 import PropTypes from 'prop-types';
 
 const Navbar = ({navigate,current, style: customStyle}) => {
 	
+	const signOut = () => {
+		auth.signOut().then(() => navigate('/'));
+	};
+
 	return (
 		<Layout.Header className="header">
 			<div className="logo" />
@@ -16,6 +21,8 @@ const Navbar = ({navigate,current, style: customStyle}) => {
 		        <Menu.Item key="/home" onClick={() => navigate('/home')}>Home</Menu.Item>
 		        <Menu.Item key="/profile" onClick={() => navigate('/profile')}>My Profile</Menu.Item>
 		        <Menu.Item key="/office-details" onClick={() => navigate('/office-details')}>Office Details</Menu.Item>
+
+		        <Menu.Item key="/logout" onClick={signOut}>Log Out</Menu.Item>
 		    </Menu>
 		</Layout.Header>
 	);
