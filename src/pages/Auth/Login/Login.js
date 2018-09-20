@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import UserAction from 'store/actions/user';
 import { Button, Form, Layout, Input, Col, Icon } from 'antd';
-import firebase, { database } from 'config/firebase';
+import { auth, database } from 'config/firebase';
 import bugsnagClient from 'lib/bugsnag';
 
 class Login extends Component {
@@ -23,8 +23,6 @@ class Login extends Component {
 	getInitialState() {
 		return {
 			loading: false,
-			email: 'st0mxhack@gmail.com',
-			password: 'secret',
 		};
 	}
 
@@ -42,7 +40,7 @@ class Login extends Component {
 				const {email, password} = val;
 				this.setState({loading: true});
 
-				firebase.auth().signInWithEmailAndPassword(email, password)
+				auth.signInWithEmailAndPassword(email, password)
 					.then(({user}) => {
 						Agents.where('auth_id', '==', user.uid).get().then(snapshot => {
 							let userData = {};
@@ -70,7 +68,7 @@ class Login extends Component {
 	 * @return {ReactElement} 
 	 */
 	render() {
-		const {loading, email, password} = this.state;
+		const {loading} = this.state;
 		const {history} = this.props;
 
 		return (
