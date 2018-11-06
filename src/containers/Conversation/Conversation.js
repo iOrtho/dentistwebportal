@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { Layout, Button, Input, Icon, Form, Col } from 'antd';
+import axios from 'axios';
 import moment from 'moment';
 import { database } from 'config/firebase';
 import Message from 'components/Message';
@@ -20,6 +21,7 @@ class Conversation extends Component {
 
 		this.asyncLoadHistory = this.asyncLoadHistory.bind(this);
 		this.sendMessage = this.sendMessage.bind(this);
+		this.handleNotifyPatient = this.handleNotifyPatient.bind(this);
 		this.isMessageTheLastSeen = this.isMessageTheLastSeen.bind(this);
 		this.renderMessages = this.renderMessages.bind(this);
 		this.handleMarkMessagesAsRead = this.handleMarkMessagesAsRead.bind(this);
@@ -85,7 +87,7 @@ class Conversation extends Component {
 		 		...change.doc.data(), 
 		 		id: change.doc.id,
 		 	};
-		 	this.mark
+
 			if (change.type === 'added') { 
 				this.setState((prevState) => ({
 					chat: this.sortByDate([...prevState.chat, data])
@@ -100,7 +102,6 @@ class Conversation extends Component {
 	        	const index = newChat.findIndex(({id}) => id == data.id);
 	        	newChat[index] = data;
 	        	this.setState({chat: newChat});
-	        	console.log(data)
 	        }
 
 	        if (change.type === 'removed') {
@@ -164,10 +165,23 @@ class Conversation extends Component {
 		Messages.doc().set({ body, recipient, Author, created_at: new Date() })
 		.then(() => {
 			console.log('Successfully sent message!');
+			this.handleNotifyPatient();
 		})
 		.catch((err) => {
 			console.error('Error:', err);
 		});
+	}
+
+	/**
+	 * Send a notification to the patient's device to inform then of a new message
+	 * 
+	 * @return {Void}
+	 */
+	handleNotifyPatient() {
+		const {notifications_token: token} = this.state.customer.permissions;
+
+		axios.post(`https://us-central1-doctorapp-9c43b.cloudfunctions.net/sendNotification`, {expoTokenId: token})
+			.catch(console.error);
 	}
 
 	/**
