@@ -5,6 +5,8 @@ import { database } from 'config/firebase';
 
 const SideMenu = ({conversations, onOpenConvo, onOpenHome, style: customStyle}) => {
 
+	const sortedByUnreadMsg = Object.keys(conversations).map(convId => conversations[convId]).sort((a, b) => b.unread - a.unread);
+
 	return (
 		<Layout.Sider style={{...customStyle}}>
 			<Menu
@@ -14,17 +16,13 @@ const SideMenu = ({conversations, onOpenConvo, onOpenHome, style: customStyle}) 
 			>
 			<Menu.Item key="1" onClick={onOpenHome}><Icon type="home" /> Dashboard</Menu.Item>
 				{(() => {
-					const convId = Object.keys(conversations);
-
-					if(convId.length > 0) {
+					if(sortedByUnreadMsg.length > 0) {
 						return (
 							<Menu.SubMenu key="sub1" title={<span><Icon type="user" />Conversations</span>}>
-								{convId.map(id => {
-									const convo = conversations[id];
-
+								{sortedByUnreadMsg.map(({id, name, unread}) => {
 									return (
 										<Menu.Item key={id} onClick={() => onOpenConvo(id)}>
-											{convo.name} {convo.unread ? `(${convo.unread})` : ''}
+											{name} {unread ? `(${unread})` : ''}
 										</Menu.Item>
 									);
 								})}
