@@ -72,7 +72,7 @@ class Home extends Component {
 			const conversations = { ...this.state.conversations};
 			const counts = {};
 			snapshot.docChanges().forEach(change => {
-				const {Author, read_at} = { ... change.doc.data() };
+				const {Author, read_at} = { ...change.doc.data() };
 
 				// count the # of unread msgs
 				if(!read_at) {
